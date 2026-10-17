@@ -1,0 +1,5 @@
+.env*
+local.db*
+node_modules
+.next
+scripts/.deploy-tmp
