@@ -6,6 +6,7 @@
 
 import { useSyncExternalStore } from "react";
 import { api, ApiError, cookieAccount, leaveIfSwitched, leavePage, OTHER_ACCOUNT, pinAccount } from "./api";
+import { hasItem, readJson, removeItem, removeKeys, writeJson } from "./device-storage";
 import { addDays, applyPatch, dayKey, syncPatch } from "@/domain/mandala";
 import type {
   Account,
@@ -120,49 +121,6 @@ export function useGoal(id: string | null | undefined): GoalWithCells | undefine
 }
 
 // ---------- local persistence ----------
-
-function readJson<T>(key: string): T | null {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeJson(key: string, value: unknown) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Private mode or full storage: the app still works, it just will not open offline.
-  }
-}
-
-function hasItem(key: string | null): boolean {
-  try {
-    return key !== null && window.localStorage.getItem(key) !== null;
-  } catch {
-    return false;
-  }
-}
-
-function removeItem(key: string) {
-  try {
-    window.localStorage.removeItem(key);
-  } catch {
-    // Storage blocked: nothing was kept anyway.
-  }
-}
-
-function removeKeys(drop: (key: string) => boolean) {
-  try {
-    for (const key of Object.keys(window.localStorage)) {
-      if (drop(key)) window.localStorage.removeItem(key);
-    }
-  } catch {
-    // Storage blocked: nothing was kept anyway.
-  }
-}
 
 function persistState() {
   const key = storageKey("state");
