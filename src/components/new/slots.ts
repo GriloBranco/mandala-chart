@@ -1,9 +1,9 @@
 // Where the next typed square goes. Ring index 0-7 runs clockwise from 12 o'clock, so
 // "next" always moves clockwise, the way the chart is read.
 
-import { actionCells, isFilled, pillarCell } from "@/lib/mandala";
-import type { Cell, CellPatch, GoalWithCells } from "@/lib/types";
-import { namedPillars } from "@/components/lever/week";
+import { actionCells, isFilled, pillarCell } from "@/domain/mandala";
+import type { Cell, CellPatch, GoalWithCells } from "@/domain/types";
+import { namedPillars } from "@/domain/week";
 
 /** Ring indexes after `from`, clockwise and wrapping, without `from` itself. */
 function after(from: number): number[] {

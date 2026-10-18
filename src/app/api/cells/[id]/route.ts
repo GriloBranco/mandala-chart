@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { readJson, route } from "@/lib/http";
-import { updateCell } from "@/lib/repo";
-import { cellPatchSchema } from "@/lib/validators";
+import { readJson, route } from "@/server/http";
+import { updateCell } from "@/server/repo";
+import { cellPatchSchema } from "@/domain/validators";
 
 export const PATCH = route<RouteContext<"/api/cells/[id]">>(async (request, { params }, user) => {
   const { id } = await params;

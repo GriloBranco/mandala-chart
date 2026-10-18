@@ -2,10 +2,10 @@
 
 import { ChevronLeft, Grid3x3, Zap } from "lucide-react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { dayKey, fillCounts, goalProgress } from "@/lib/mandala";
-import { goBack, navigate } from "@/lib/nav";
-import { useAppState, useGoal } from "@/lib/store";
-import type { GoalWithCells } from "@/lib/types";
+import { dayKey, fillCounts, goalProgress } from "@/domain/mandala";
+import { goBack, navigate } from "@/client/nav";
+import { useAppState, useGoal } from "@/client/store";
+import type { GoalWithCells } from "@/domain/types";
 import { ViewHeader } from "@/components/shell/ViewHeader";
 import { Button, IconButton } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";

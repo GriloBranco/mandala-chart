@@ -4,8 +4,8 @@ import { Mic, PenLine } from "lucide-react";
 import { useId } from "react";
 import { sinceLabel, timeLabel } from "@/components/report/format";
 import { useLatestReport } from "@/components/report/reports-data";
-import { navigate } from "@/lib/nav";
-import { openRecorder } from "@/lib/recorder";
+import { navigate } from "@/client/nav";
+import { openRecorder } from "@/client/recorder";
 
 /** "How did today go?" with the big mic. Once today's report is in, it shows its summary. */
 export function ReportCard({ today, voice }: { today: string; voice: boolean }) {

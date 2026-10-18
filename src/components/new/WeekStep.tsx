@@ -5,10 +5,10 @@ import { AsciiSpinner } from "@/components/ascii/AsciiSpinner";
 import { getLeverageRun, startLeverage, useLeverageRun } from "@/components/lever/leverage-run";
 import { SectionLabel } from "@/components/lever/parts";
 import { PickRow, PickSummary, WeekPicker } from "@/components/lever/WeekPicker";
-import { filledActions, leverSig, ratingPatches, readAnalysis } from "@/components/lever/week";
+import { filledActions, leverSig, ratingPatches, readAnalysis } from "@/domain/week";
 import { Button } from "@/components/ui/Button";
-import { actions, goalById, useAppState } from "@/lib/store";
-import type { Cell, CellPatch, GoalWithCells } from "@/lib/types";
+import { actions, goalById, useAppState } from "@/client/store";
+import type { Cell, CellPatch, GoalWithCells } from "@/domain/types";
 import { Dock, NavRow, StepBody, StepHeading } from "./StepParts";
 import { readWeekPicks, writeWeekPicks } from "./text";
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { readJson, route } from "@/lib/http";
-import { createGoal } from "@/lib/repo";
-import { createGoalSchema } from "@/lib/validators";
+import { readJson, route } from "@/server/http";
+import { createGoal } from "@/server/repo";
+import { createGoalSchema } from "@/domain/validators";
 
 export const POST = route(async (request, _context, user) => {
   const input = await readJson(request, createGoalSchema);

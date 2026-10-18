@@ -2,7 +2,7 @@
 
 import { Sparkles, X } from "lucide-react";
 import { useState } from "react";
-import { ai } from "@/lib/ai-client";
+import { ai } from "@/client/ai";
 import { AsciiSpinner } from "@/components/ascii/AsciiSpinner";
 import { Button, IconButton } from "@/components/ui/Button";
 import { aiErrorMessage } from "./edits";

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { readJson, route } from "@/lib/http";
-import { deleteGoal, updateGoal } from "@/lib/repo";
-import { goalPatchSchema } from "@/lib/validators";
+import { readJson, route } from "@/server/http";
+import { deleteGoal, updateGoal } from "@/server/repo";
+import { goalPatchSchema } from "@/domain/validators";
 
 export const PATCH = route<RouteContext<"/api/goals/[id]">>(async (request, { params }, user) => {
   const { id } = await params;

@@ -2,11 +2,11 @@
 
 import { Pencil } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { AutoTextarea } from "@/components/goal/AutoTextarea";
+import { AutoTextarea } from "@/components/ui/AutoTextarea";
 import { cn } from "@/components/ui/cn";
-import { ApiError } from "@/lib/api-client";
-import { actions, getState, useAppState } from "@/lib/store";
-import { toast } from "@/lib/toast";
+import { ApiError } from "@/client/api";
+import { actions, getState, useAppState } from "@/client/store";
+import { toast } from "@/client/toast";
 
 /** The default line, shown until the person writes their own. */
 export const HEADLINE = "I just need to be the best version of myself compared to the other versions";

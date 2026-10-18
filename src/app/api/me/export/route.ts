@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { route } from "@/lib/http";
-import { exportData } from "@/lib/repo";
+import { route } from "@/server/http";
+import { exportData } from "@/server/repo";
 
 /** Everything in the account as one JSON file. */
 export const GET = route(async (_request, _context, user) => {

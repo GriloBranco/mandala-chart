@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { useToday } from "@/components/today/useToday";
+import { useToday } from "@/client/useToday";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
-import { ai } from "@/lib/ai-client";
-import { ApiError } from "@/lib/api-client";
-import { actions, getState, useAppState } from "@/lib/store";
-import { toast } from "@/lib/toast";
-import type { ProposedUpdate, ReportAnalysis, ReportSource } from "@/lib/types";
-import { newUuid } from "@/lib/uuid";
+import { ai } from "@/client/ai";
+import { ApiError } from "@/client/api";
+import { actions, getState, useAppState } from "@/client/store";
+import { toast } from "@/client/toast";
+import type { ProposedUpdate, ReportAnalysis, ReportSource } from "@/domain/types";
+import { newUuid } from "@/client/uuid";
 import { plural } from "./format";
 import {
   AudioNote,

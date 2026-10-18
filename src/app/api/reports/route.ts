@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { readJson, route } from "@/lib/http";
-import { listReportsWithEvents, saveReport } from "@/lib/repo";
-import { saveReportSchema } from "@/lib/validators";
+import { readJson, route } from "@/server/http";
+import { listReportsWithEvents, saveReport } from "@/server/repo";
+import { saveReportSchema } from "@/domain/validators";
 
 export const GET = route(async (request, _context, user) => {
   const params = request.nextUrl.searchParams;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { route } from "@/lib/http";
-import { listEvents } from "@/lib/repo";
+import { route } from "@/server/http";
+import { listEvents } from "@/server/repo";
 
 export const GET = route(async (request, _context, user) => {
   const params = request.nextUrl.searchParams;

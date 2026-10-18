@@ -3,10 +3,10 @@
 import type { ReactNode } from "react";
 import { GoalGlyph } from "@/components/shell/GoalGlyph";
 import { cn } from "@/components/ui/cn";
-import { actionCells, isFilled } from "@/lib/mandala";
-import type { Cell, GoalWithCells } from "@/lib/types";
+import { actionCells, isFilled } from "@/domain/mandala";
+import type { Cell, GoalWithCells } from "@/domain/types";
 import { PickToggle } from "./parts";
-import { coverage, pickablePillars, pillarName } from "./week";
+import { coverage, pickablePillars, pillarName } from "@/domain/week";
 
 /**
  * One action with its "this week" toggle. The Leverage view adds rating controls as

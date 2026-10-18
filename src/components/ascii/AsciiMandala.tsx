@@ -17,7 +17,7 @@ import {
   lightAt,
   sampleField,
   settledGlyphs,
-} from "@/lib/ascii-field";
+} from "@/components/ascii/field";
 
 // "Bloom to Grid": the goal decodes at the center, eight petals open and square off into the
 // real 9x9 chart. Once settled, a slow light orbits the chart and the pointer lifts the squares

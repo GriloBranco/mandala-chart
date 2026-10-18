@@ -2,11 +2,11 @@
 
 import { ChevronDown, CircleUserRound, Mic, NotebookPen, Plus, Sun } from "lucide-react";
 import { useMemo, useState } from "react";
-import { dayKey, goalProgress, isFilled, pillarCell, pillarProgress, todayItems } from "@/lib/mandala";
-import { navigate, useView, viewGoalId, type View } from "@/lib/nav";
-import { openRecorder } from "@/lib/recorder";
-import { useAppState } from "@/lib/store";
-import type { GoalWithCells } from "@/lib/types";
+import { dayKey, goalProgress, isFilled, pillarCell, pillarProgress, todayItems } from "@/domain/mandala";
+import { navigate, useView, viewGoalId, type View } from "@/client/nav";
+import { openRecorder } from "@/client/recorder";
+import { useAppState } from "@/client/store";
+import type { GoalWithCells } from "@/domain/types";
 import { AccountSheet } from "@/components/account/AccountSheet";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";

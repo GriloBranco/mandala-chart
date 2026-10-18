@@ -2,16 +2,16 @@
 
 import { Eraser } from "lucide-react";
 import { useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from "react";
-import { actionHints, dayKey, EFFORT_LABELS, goalHints, IMPACT_LABELS, isFilled, NOTES_MAX, pillarProgress } from "@/lib/mandala";
-import { actions as store, useAppState } from "@/lib/store";
-import type { Cell, CellKind, CellPatch, CellStatus, Checkin, GoalWithCells, Suggestion } from "@/lib/types";
+import { actionHints, dayKey, EFFORT_LABELS, goalHints, IMPACT_LABELS, isFilled, NOTES_MAX, pillarProgress } from "@/domain/mandala";
+import { actions as store, useAppState } from "@/client/store";
+import type { Cell, CellKind, CellPatch, CellStatus, Checkin, GoalWithCells, Suggestion } from "@/domain/types";
 import { PillarChips } from "@/components/shared/PillarChips";
 import { SuggestionTray } from "@/components/shared/SuggestionTray";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
-import { AutoTextarea } from "./AutoTextarea";
+import { AutoTextarea } from "@/components/ui/AutoTextarea";
 import { clearSquare, editCell, fillSquares, hasContent, setKind, suggestionPatch } from "./edits";
 import { HabitDays } from "./HabitDays";
 import { looksLikeHabit, pillarHints, type ChartIndex } from "./model";

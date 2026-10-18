@@ -1,7 +1,7 @@
 "use client";
 
-import { addDays, habitStrength, strengthGlyph } from "@/lib/mandala";
-import type { Cell, Checkin } from "@/lib/types";
+import { addDays, habitStrength, strengthGlyph } from "@/domain/mandala";
+import type { Cell, Checkin } from "@/domain/types";
 import { CheckCircle } from "@/components/ui/CheckCircle";
 import { cn } from "@/components/ui/cn";
 import { editCell, setCheckin } from "./edits";

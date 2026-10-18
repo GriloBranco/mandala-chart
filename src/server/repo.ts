@@ -1,8 +1,8 @@
 import "server-only";
 import type { InStatement, InValue, ResultSet, Row } from "@libsql/client";
 import { getDb } from "./db";
-import { HttpError } from "./errors";
-import { applyPatch, normalizePatch, NOTES_MAX, PILLAR_SLOT } from "./mandala";
+import { HttpError } from "@/domain/errors";
+import { applyPatch, normalizePatch, NOTES_MAX, PILLAR_SLOT } from "@/domain/mandala";
 import type {
   AppState,
   Cell,
@@ -17,7 +17,7 @@ import type {
   Report,
   ReportSource,
   ReportWithEvents,
-} from "./types";
+} from "@/domain/types";
 
 // Every function takes the signed-in user's id first and only reads or writes that user's
 // rows: goals, reports, events and check-ins by user_id, squares through their goal. Anything

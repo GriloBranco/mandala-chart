@@ -4,7 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState, type InputHTMLAttributes, type Ref, type SyntheticEvent } from "react";
 import { IconButton } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
-import { ApiError } from "@/lib/api-client";
+import { ApiError } from "@/client/api";
 
 export type FieldShape = "pill" | "box";
 

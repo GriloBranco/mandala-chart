@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { readSession } from "@/lib/auth";
+import { readSession } from "@/server/auth";
 
 // The welcome page and the account endpoints are open; everything else needs a session.
 // This only checks the cookie's signature (no database). Route handlers do the full check.

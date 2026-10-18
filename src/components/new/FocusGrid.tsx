@@ -3,7 +3,7 @@
 import { useRef, type ReactNode } from "react";
 import { Block3x3, Square } from "@/components/shared/Square";
 import { cn } from "@/components/ui/cn";
-import { ringIndex } from "@/lib/mandala";
+import { ringIndex } from "@/domain/mandala";
 
 export interface RingSquare {
   text: string;

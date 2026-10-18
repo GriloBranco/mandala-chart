@@ -1,8 +1,8 @@
 // Pure rules for the weekly rollout and the leverage ratings. Shared by the Leverage view
 // and the last step of the new goal flow, so both pick and count the same way.
 
-import { actionLever, addDays, dayKey, isFilled, pillarCell, pillarLever, PILLAR_SLOT } from "@/lib/mandala";
-import type { Cell, CellPatch, GoalWithCells, LeverageAnalysis } from "@/lib/types";
+import { actionLever, addDays, dayKey, isFilled, pillarCell, pillarLever, PILLAR_SLOT } from "@/domain/mandala";
+import type { Cell, CellPatch, GoalWithCells, LeverageAnalysis } from "@/domain/types";
 
 /** Score bars are drawn against these, so "High, Easy, helps 2" fills the bar. */
 export const PILLAR_SCALE = 12;

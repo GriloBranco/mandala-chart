@@ -5,8 +5,8 @@
 // and flush when the network comes back, so quick edits on the phone are never lost.
 
 import { useSyncExternalStore } from "react";
-import { api, ApiError, cookieAccount, leaveIfSwitched, leavePage, OTHER_ACCOUNT, pinAccount } from "./api-client";
-import { addDays, applyPatch, dayKey, syncPatch } from "./mandala";
+import { api, ApiError, cookieAccount, leaveIfSwitched, leavePage, OTHER_ACCOUNT, pinAccount } from "./api";
+import { addDays, applyPatch, dayKey, syncPatch } from "@/domain/mandala";
 import type {
   Account,
   AppState,
@@ -18,7 +18,7 @@ import type {
   ProposedUpdate,
   Report,
   ReportSource,
-} from "./types";
+} from "@/domain/types";
 
 export interface StoreState {
   status: "idle" | "loading" | "ready" | "error";

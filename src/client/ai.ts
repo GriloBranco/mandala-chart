@@ -4,10 +4,10 @@
 // Each call first sends any edits still waiting to sync, because the server reads the
 // chart from the database: a just-typed action must be there before the AI looks.
 
-import { api } from "./api-client";
-import { dayKey } from "./mandala";
+import { api } from "./api";
+import { dayKey } from "@/domain/mandala";
 import { synced } from "./store";
-import type { LeverageAnalysis, ReportAnalysis, Suggestion } from "./types";
+import type { LeverageAnalysis, ReportAnalysis, Suggestion } from "@/domain/types";
 
 export const ai = {
   /** Candidate pillars for a goal, or candidate actions for one pillar. Never auto-filled. */

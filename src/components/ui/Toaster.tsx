@@ -1,6 +1,6 @@
 "use client";
 
-import { dismissToast, useToasts } from "@/lib/toast";
+import { dismissToast, useToasts } from "@/client/toast";
 import { cn } from "./cn";
 import { useKeyboardInset } from "./hooks";
 

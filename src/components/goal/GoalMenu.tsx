@@ -2,11 +2,11 @@
 
 import { Archive, Ellipsis, NotebookPen, Pencil, RotateCcw, Trash2, Trophy, Zap } from "lucide-react";
 import { useEffect, useEffectEvent, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { ApiError } from "@/lib/api-client";
-import { navigate } from "@/lib/nav";
-import { actions } from "@/lib/store";
-import { toast } from "@/lib/toast";
-import type { GoalStatus, GoalWithCells } from "@/lib/types";
+import { ApiError } from "@/client/api";
+import { navigate } from "@/client/nav";
+import { actions } from "@/client/store";
+import { toast } from "@/client/toast";
+import type { GoalStatus, GoalWithCells } from "@/domain/types";
 import { Button, IconButton } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { Sheet } from "@/components/ui/Sheet";

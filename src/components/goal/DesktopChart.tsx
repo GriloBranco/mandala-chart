@@ -13,11 +13,11 @@ import {
   type Ref,
   type RefObject,
 } from "react";
-import { dayKey, fillCounts, gridCoord, isFilled, pillarProgress, ringIndex } from "@/lib/mandala";
-import { navigate } from "@/lib/nav";
-import { useAppState } from "@/lib/store";
-import type { Cell, Checkin, GoalWithCells } from "@/lib/types";
-import { weekInfo } from "@/components/lever/week";
+import { dayKey, fillCounts, gridCoord, isFilled, pillarProgress, ringIndex } from "@/domain/mandala";
+import { navigate } from "@/client/nav";
+import { useAppState } from "@/client/store";
+import type { Cell, Checkin, GoalWithCells } from "@/domain/types";
+import { weekInfo } from "@/domain/week";
 import { Block3x3, Square } from "@/components/shared/Square";
 import { SuggestionTray } from "@/components/shared/SuggestionTray";
 import { Button, IconButton } from "@/components/ui/Button";

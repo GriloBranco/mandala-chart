@@ -4,10 +4,10 @@
 // this screen, so the "updated from a report" flash only lights up changes that came from
 // elsewhere, and it gives check-offs and clears an Undo.
 
-import { ApiError } from "@/lib/api-client";
-import { actions, cellById } from "@/lib/store";
-import { toast } from "@/lib/toast";
-import type { Cell, CellKind, CellPatch, Suggestion } from "@/lib/types";
+import { ApiError } from "@/client/api";
+import { actions, cellById } from "@/client/store";
+import { toast } from "@/client/toast";
+import type { Cell, CellKind, CellPatch, Suggestion } from "@/domain/types";
 
 const touched = new Map<string, number>();
 

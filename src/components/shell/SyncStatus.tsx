@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppState } from "@/lib/store";
+import { useAppState } from "@/client/store";
 import { cn } from "@/components/ui/cn";
 
 /** Quiet sync line: "Saved", "Saving…", or "Offline · 3 unsaved". */

@@ -1,6 +1,6 @@
-import { ApiError } from "@/lib/api-client";
-import { addDays, dayKey, isFilled, PILLAR_SLOT, pillarCell } from "@/lib/mandala";
-import type { Cell, Checkin, GoalWithCells, ProposedUpdate, ReportSource } from "@/lib/types";
+import { ApiError } from "@/client/api";
+import { addDays, dayKey, isFilled, PILLAR_SLOT, pillarCell } from "@/domain/mandala";
+import type { Cell, Checkin, GoalWithCells, ProposedUpdate, ReportSource } from "@/domain/types";
 import type { MicProblem } from "./useVoiceRecorder";
 
 export interface CellInfo {

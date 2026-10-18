@@ -3,7 +3,7 @@ import type { Part } from "@google/genai";
 import { z } from "zod";
 import { AiError, generateJson } from "./gemini";
 import { HttpError } from "./http";
-import { actionCells, actionLever, dayKey, isFilled, pillarCell } from "./mandala";
+import { actionCells, actionLever, dayKey, isFilled, pillarCell } from "@/domain/mandala";
 import type {
   Cell,
   Checkin,
@@ -12,9 +12,9 @@ import type {
   ProposedUpdate,
   ReportAnalysis,
   Suggestion,
-} from "./types";
-import { guessKind } from "./kind";
-import { daySchema } from "./validators";
+} from "@/domain/types";
+import { guessKind } from "@/domain/kind";
+import { daySchema } from "@/domain/validators";
 
 // Prompts and answers for the four AI features: suggest, sharpen, leverage and report analysis.
 // The model sees short refs instead of ids (P3 = pillar 3, A3.5 = its 5th action, G2.A3.5 when a

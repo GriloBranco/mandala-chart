@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { authReady } from "@/lib/auth";
-import { publicRoute, requireJson, tooMany } from "@/lib/http";
-import { spendPasswordTime, verifyPassword } from "@/lib/passwords";
-import { setSessionCookies } from "@/lib/session";
-import { clearTries, countTry } from "@/lib/throttle";
-import { getUserForLogin, normalizeEmail } from "@/lib/users";
-import { loginSchema } from "@/lib/validators";
+import { authReady } from "@/server/auth";
+import { publicRoute, requireJson, tooMany } from "@/server/http";
+import { spendPasswordTime, verifyPassword } from "@/server/passwords";
+import { setSessionCookies } from "@/server/session";
+import { clearTries, countTry } from "@/server/throttle";
+import { getUserForLogin, normalizeEmail } from "@/server/users";
+import { loginSchema } from "@/domain/validators";
 
 const WRONG = "Wrong email or password.";
 

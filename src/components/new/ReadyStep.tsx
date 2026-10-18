@@ -2,11 +2,11 @@
 
 import type { ReactNode } from "react";
 import { Block3x3, Square } from "@/components/shared/Square";
-import { filledActions, topLeverPillar } from "@/components/lever/week";
+import { filledActions, topLeverPillar } from "@/domain/week";
 import { Button } from "@/components/ui/Button";
 import { useReducedMotion } from "@/components/ui/hooks";
-import { fillCounts, pillarCell, ringIndex, statusGlyph } from "@/lib/mandala";
-import type { GoalWithCells } from "@/lib/types";
+import { fillCounts, pillarCell, ringIndex, statusGlyph } from "@/domain/mandala";
+import type { GoalWithCells } from "@/domain/types";
 import { actionAt } from "./slots";
 import { Dock, StepBody } from "./StepParts";
 

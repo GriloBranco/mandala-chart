@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { readJson, route, tooMany } from "@/lib/http";
-import { hashPassword, verifyPassword } from "@/lib/passwords";
-import { setSessionCookies } from "@/lib/session";
-import { clearTries, countTry } from "@/lib/throttle";
-import { getPasswordHash, setPassword } from "@/lib/users";
-import { changePasswordSchema } from "@/lib/validators";
+import { readJson, route, tooMany } from "@/server/http";
+import { hashPassword, verifyPassword } from "@/server/passwords";
+import { setSessionCookies } from "@/server/session";
+import { clearTries, countTry } from "@/server/throttle";
+import { getPasswordHash, setPassword } from "@/server/users";
+import { changePasswordSchema } from "@/domain/validators";
 
 /** New password. Every other device is signed out; this one gets a fresh session. */
 export const POST = route(async (request, _context, user) => {

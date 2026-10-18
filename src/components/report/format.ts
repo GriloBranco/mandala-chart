@@ -1,5 +1,5 @@
-import { addDays } from "@/lib/mandala";
-import type { ProgressEvent } from "@/lib/types";
+import { addDays } from "@/domain/mandala";
+import type { ProgressEvent } from "@/domain/types";
 
 // Dates in English to match the copy; times follow the device's 12 or 24 hour setting.
 

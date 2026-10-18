@@ -1,7 +1,7 @@
 import "server-only";
 import type { Row } from "@libsql/client";
 import { getDb } from "./db";
-import { HttpError } from "./errors";
+import { HttpError } from "@/domain/errors";
 
 export interface User {
   id: string;

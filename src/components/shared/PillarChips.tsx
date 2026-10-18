@@ -1,7 +1,7 @@
 "use client";
 
-import { isFilled, pillarCell } from "@/lib/mandala";
-import type { GoalWithCells } from "@/lib/types";
+import { isFilled, pillarCell } from "@/domain/mandala";
+import type { GoalWithCells } from "@/domain/types";
 import { cn } from "@/components/ui/cn";
 
 /**

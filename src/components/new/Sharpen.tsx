@@ -4,8 +4,8 @@ import { Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { Button, IconButton } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
-import { ai } from "@/lib/ai-client";
-import { ApiError } from "@/lib/api-client";
+import { ai } from "@/client/ai";
+import { ApiError } from "@/client/api";
 import { LABEL, keepFocus } from "./StepParts";
 
 type State =

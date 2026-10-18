@@ -4,9 +4,9 @@
 // once and the result survives moving between steps.
 
 import { useSyncExternalStore } from "react";
-import { ai } from "@/lib/ai-client";
-import { ApiError } from "@/lib/api-client";
-import type { LeverageAnalysis } from "@/lib/types";
+import { ai } from "@/client/ai";
+import { ApiError } from "@/client/api";
+import type { LeverageAnalysis } from "@/domain/types";
 
 export interface LeverageRun {
   status: "loading" | "ready" | "error";

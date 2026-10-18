@@ -1,6 +1,6 @@
 import "server-only";
 import { getDb } from "./db";
-import { HttpError } from "./errors";
+import { HttpError } from "@/domain/errors";
 
 // A daily AI allowance per person, plus a total for everyone, so a public deployment cannot
 // run up the Gemini bill. Days are UTC. Each call is counted before it runs, in one atomic

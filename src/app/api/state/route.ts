@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { aiEnabled } from "@/lib/gemini";
-import { route } from "@/lib/http";
-import { addDays, dayKey } from "@/lib/mandala";
-import { loadState } from "@/lib/repo";
-import { daySchema } from "@/lib/validators";
+import { aiEnabled } from "@/server/gemini";
+import { route } from "@/server/http";
+import { addDays, dayKey } from "@/domain/mandala";
+import { loadState } from "@/server/repo";
+import { daySchema } from "@/domain/validators";
 
 // Everything the app needs in one request: the account, goals with all their squares, recent check-ins.
 export const GET = route(async (request, _context, user) => {

@@ -12,10 +12,10 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { dayKey, gridCoord, isFilled, ringIndex } from "@/lib/mandala";
-import { navigate } from "@/lib/nav";
-import { useAppState } from "@/lib/store";
-import type { Cell, GoalWithCells } from "@/lib/types";
+import { dayKey, gridCoord, isFilled, ringIndex } from "@/domain/mandala";
+import { navigate } from "@/client/nav";
+import { useAppState } from "@/client/store";
+import type { Cell, GoalWithCells } from "@/domain/types";
 import { Block3x3, Square } from "@/components/shared/Square";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";

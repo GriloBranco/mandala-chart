@@ -8,11 +8,11 @@ import { ViewHeader } from "@/components/shell/ViewHeader";
 import { Button, IconButton } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
-import { actionLever, dayKey, EFFORT_LABELS, IMPACT_LABELS, pillarCell, pillarLever } from "@/lib/mandala";
-import { goBack, navigate } from "@/lib/nav";
-import { actions, goalById, useAppState, useGoal } from "@/lib/store";
-import { toast } from "@/lib/toast";
-import type { Cell, GoalWithCells } from "@/lib/types";
+import { actionLever, dayKey, EFFORT_LABELS, IMPACT_LABELS, pillarCell, pillarLever } from "@/domain/mandala";
+import { goBack, navigate } from "@/client/nav";
+import { actions, goalById, useAppState, useGoal } from "@/client/store";
+import { toast } from "@/client/toast";
+import type { Cell, GoalWithCells } from "@/domain/types";
 import { startLeverage, useLeverageRun, type LeverageRun } from "./leverage-run";
 import { ChipsToggle, GhostChip, LeverBar, LeverTag, SectionLabel } from "./parts";
 import { PickRow, PickSummary } from "./WeekPicker";
@@ -36,7 +36,7 @@ import {
   type AiAction,
   type AiPillar,
   type AiRead,
-} from "./week";
+} from "@/domain/week";
 
 type Filter = "all" | "unrated" | "week";
 

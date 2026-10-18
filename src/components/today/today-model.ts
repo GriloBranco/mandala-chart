@@ -1,4 +1,4 @@
-import { weekInfo } from "@/components/lever/week";
+import { weekInfo } from "@/domain/week";
 import {
   actionLever,
   dayKey,
@@ -8,8 +8,8 @@ import {
   pillarCell,
   todayItems,
   type TodayItem,
-} from "@/lib/mandala";
-import type { Checkin, GoalWithCells } from "@/lib/types";
+} from "@/domain/mandala";
+import type { Checkin, GoalWithCells } from "@/domain/types";
 import { shortGoalTitle } from "@/components/report/format";
 
 export type SetupStep = "pillars" | "actions" | "pick";

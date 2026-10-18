@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type RefObject } from "react";
-import type { Checkin, GoalWithCells } from "@/lib/types";
+import type { Checkin, GoalWithCells } from "@/domain/types";
 import { wasTouched } from "./edits";
 import { squareSignature } from "./model";
 

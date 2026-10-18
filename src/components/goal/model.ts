@@ -1,7 +1,7 @@
 // Pure helpers for the chart views: where each square sits in the 9x9, what it holds,
 // and the small bits of copy the views share. No React, no store.
 
-import { guessKind } from "@/lib/kind";
+import { guessKind } from "@/domain/kind";
 import {
   PILLAR_SLOT,
   RING,
@@ -12,8 +12,8 @@ import {
   ringIndex,
   statusGlyph,
   strengthGlyph,
-} from "@/lib/mandala";
-import type { Cell, Checkin, GoalWithCells } from "@/lib/types";
+} from "@/domain/mandala";
+import type { Cell, Checkin, GoalWithCells } from "@/domain/types";
 
 // ---------- geometry ----------
 

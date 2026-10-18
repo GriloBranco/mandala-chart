@@ -3,7 +3,7 @@
 import { AsciiMandala } from "@/components/ascii/AsciiMandala";
 import { Headline } from "@/components/shell/Headline";
 import { Button } from "@/components/ui/Button";
-import { navigate } from "@/lib/nav";
+import { navigate } from "@/client/nav";
 
 /** First run: no goals yet. */
 export function Welcome({ voice }: { voice: boolean }) {

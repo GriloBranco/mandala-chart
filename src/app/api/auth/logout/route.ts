@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { readSession } from "@/lib/auth";
-import { isJson, otherAccount, publicRoute } from "@/lib/http";
-import { clearSessionCookies, endAllSessions, userFor } from "@/lib/session";
+import { readSession } from "@/server/auth";
+import { isJson, otherAccount, publicRoute } from "@/server/http";
+import { clearSessionCookies, endAllSessions, userFor } from "@/server/session";
 
 async function wantsEverywhere(request: Request): Promise<boolean> {
   if (!isJson(request)) return false;

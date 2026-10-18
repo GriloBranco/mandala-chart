@@ -2,8 +2,8 @@
 // file. Both go through api-client, so they check the page's account and handle 401 like
 // every other call. Errors are ApiErrors with the server's message.
 
-import { api, apiFetch, ApiError } from "@/lib/api-client";
-import { dayKey } from "@/lib/mandala";
+import { api, apiFetch, ApiError } from "@/client/api";
+import { dayKey } from "@/domain/mandala";
 
 async function failure(response: Response): Promise<ApiError> {
   const data = (await response.json().catch(() => null)) as { error?: string } | null;

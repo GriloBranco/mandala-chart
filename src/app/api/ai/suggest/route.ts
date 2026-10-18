@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { suggest, suggestInputSchema } from "@/lib/ai";
-import { requireAi } from "@/lib/gemini";
-import { readJson, route } from "@/lib/http";
-import { useQuota } from "@/lib/quota";
-import { getGoal } from "@/lib/repo";
+import { suggest, suggestInputSchema } from "@/server/ai";
+import { requireAi } from "@/server/gemini";
+import { readJson, route } from "@/server/http";
+import { useQuota } from "@/server/quota";
+import { getGoal } from "@/server/repo";
 
 export const maxDuration = 60;
 

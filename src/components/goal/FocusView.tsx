@@ -2,10 +2,10 @@
 
 import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import { useLayoutEffect, useMemo, useRef, type MouseEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { RING, dayKey, fillCounts, goalProgress, isFilled, pillarProgress, ringIndex } from "@/lib/mandala";
-import { navigate } from "@/lib/nav";
-import { useAppState } from "@/lib/store";
-import type { Cell, Checkin, GoalWithCells } from "@/lib/types";
+import { RING, dayKey, fillCounts, goalProgress, isFilled, pillarProgress, ringIndex } from "@/domain/mandala";
+import { navigate } from "@/client/nav";
+import { useAppState } from "@/client/store";
+import type { Cell, Checkin, GoalWithCells } from "@/domain/types";
 import { Block3x3, Square } from "@/components/shared/Square";
 import { SuggestionTray } from "@/components/shared/SuggestionTray";
 import { Button, IconButton } from "@/components/ui/Button";

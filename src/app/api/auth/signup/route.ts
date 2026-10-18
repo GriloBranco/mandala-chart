@@ -1,12 +1,12 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { authReady } from "@/lib/auth";
-import { publicRoute, requireJson, tooMany } from "@/lib/http";
-import { hashPassword } from "@/lib/passwords";
-import { setSessionCookies } from "@/lib/session";
-import { countTry } from "@/lib/throttle";
-import { createUser } from "@/lib/users";
-import { signupSchema } from "@/lib/validators";
+import { authReady } from "@/server/auth";
+import { publicRoute, requireJson, tooMany } from "@/server/http";
+import { hashPassword } from "@/server/passwords";
+import { setSessionCookies } from "@/server/session";
+import { countTry } from "@/server/throttle";
+import { createUser } from "@/server/users";
+import { signupSchema } from "@/domain/validators";
 
 /** Compares without leaking where the texts differ; hashing first gives both the same length. */
 function sameText(a: string, b: string): boolean {

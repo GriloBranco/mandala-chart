@@ -7,8 +7,8 @@ import { CheckCircle } from "@/components/ui/CheckCircle";
 import { cn } from "@/components/ui/cn";
 import { Sheet } from "@/components/ui/Sheet";
 import { useLongPress } from "@/components/ui/useLongPress";
-import { addDays, habitStrength, strengthGlyph, type TodayItem } from "@/lib/mandala";
-import type { Checkin } from "@/lib/types";
+import { addDays, habitStrength, strengthGlyph, type TodayItem } from "@/domain/mandala";
+import type { Checkin } from "@/domain/types";
 
 export interface MenuItem {
   label: string;

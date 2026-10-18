@@ -1,11 +1,11 @@
 // Light helpers for the new goal flow. They suggest; they never block.
 
-import { actionHints, dayKey } from "@/lib/mandala";
-import { localKey } from "@/lib/store";
+import { actionHints, dayKey } from "@/domain/mandala";
+import { localKey } from "@/client/store";
 
 // ---------- kind ----------
 
-export { guessKind } from "@/lib/kind";
+export { guessKind } from "@/domain/kind";
 
 // ---------- hints ----------
 

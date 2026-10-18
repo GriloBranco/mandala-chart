@@ -3,14 +3,14 @@
 import { ChevronDown, Download, KeyRound, LogOut, MonitorSmartphone, Trash2 } from "lucide-react";
 import { useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { AsciiSpinner } from "@/components/ascii/AsciiSpinner";
-import { AutoTextarea } from "@/components/goal/AutoTextarea";
+import { AutoTextarea } from "@/components/ui/AutoTextarea";
 import { cleanHeadline, HEADLINE, HEADLINE_MAX, saveHeadline } from "@/components/shell/Headline";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { Sheet } from "@/components/ui/Sheet";
-import { api, ApiError } from "@/lib/api-client";
-import { actions, clearLocalData, getState, useAppState } from "@/lib/store";
-import { toast } from "@/lib/toast";
+import { api, ApiError } from "@/client/api";
+import { actions, clearLocalData, getState, useAppState } from "@/client/store";
+import { toast } from "@/client/toast";
 import { errorText, PasswordInput } from "./fields";
 import { deleteAccount, downloadExport } from "./requests";
 

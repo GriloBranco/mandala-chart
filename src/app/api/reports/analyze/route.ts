@@ -6,14 +6,14 @@ import {
   AUDIO_MIN_BYTES,
   audioMimeTypes,
   type ReportScope,
-} from "@/lib/ai";
-import { requireAi } from "@/lib/gemini";
-import { HttpError, readJson, route } from "@/lib/http";
-import { dayKey } from "@/lib/mandala";
-import { useQuota } from "@/lib/quota";
-import { loadState } from "@/lib/repo";
-import type { GoalWithCells } from "@/lib/types";
-import { daySchema } from "@/lib/validators";
+} from "@/server/ai";
+import { requireAi } from "@/server/gemini";
+import { HttpError, readJson, route } from "@/server/http";
+import { dayKey } from "@/domain/mandala";
+import { useQuota } from "@/server/quota";
+import { loadState } from "@/server/repo";
+import type { GoalWithCells } from "@/domain/types";
+import { daySchema } from "@/domain/validators";
 
 // A voice report can take a while: upload, transcription and matching in one Gemini call.
 export const maxDuration = 60;

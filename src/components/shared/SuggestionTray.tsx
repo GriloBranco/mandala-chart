@@ -2,9 +2,9 @@
 
 import { Plus, RefreshCw, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { ai } from "@/lib/ai-client";
-import { useAppState } from "@/lib/store";
-import type { Suggestion } from "@/lib/types";
+import { ai } from "@/client/ai";
+import { useAppState } from "@/client/store";
+import type { Suggestion } from "@/domain/types";
 import { AsciiSpinner } from "@/components/ascii/AsciiSpinner";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";

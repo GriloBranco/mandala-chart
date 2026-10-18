@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { dayKey, gridCoord, isFilled, ringIndex } from "@/lib/mandala";
-import { navigate } from "@/lib/nav";
-import { useAppState } from "@/lib/store";
-import type { GoalWithCells } from "@/lib/types";
+import { dayKey, gridCoord, isFilled, ringIndex } from "@/domain/mandala";
+import { navigate } from "@/client/nav";
+import { useAppState } from "@/client/store";
+import type { GoalWithCells } from "@/domain/types";
 import { Block3x3, Square } from "@/components/shared/Square";
 import { useChangeFlash } from "./flash";
 import { cellAt, glyphsFor, indexGoal, initialOf, leverPillar, pillarName, squareAt } from "./model";

@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { useIsDesktop } from "@/components/ui/hooks";
 import { Toaster } from "@/components/ui/Toaster";
-import { navigate, useView, viewGoalId, type View } from "@/lib/nav";
-import { closeRecorder, openRecorder, useRecorderRequest } from "@/lib/recorder";
-import { actions, startStore, useAppState } from "@/lib/store";
+import { navigate, useView, viewGoalId, type View } from "@/client/nav";
+import { closeRecorder, openRecorder, useRecorderRequest } from "@/client/recorder";
+import { actions, startStore, useAppState } from "@/client/store";
 import { ShellContext } from "./ShellContext";
 import { Sidebar } from "./Sidebar";
 

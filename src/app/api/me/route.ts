@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { readJson, route, tooMany } from "@/lib/http";
-import { verifyPassword } from "@/lib/passwords";
-import { clearSessionCookies } from "@/lib/session";
-import { clearTries, countTry } from "@/lib/throttle";
-import { deleteUser, getPasswordHash, updateHeadline } from "@/lib/users";
-import { accountPatchSchema, deleteAccountSchema } from "@/lib/validators";
+import { readJson, route, tooMany } from "@/server/http";
+import { verifyPassword } from "@/server/passwords";
+import { clearSessionCookies } from "@/server/session";
+import { clearTries, countTry } from "@/server/throttle";
+import { deleteUser, getPasswordHash, updateHeadline } from "@/server/users";
+import { accountPatchSchema, deleteAccountSchema } from "@/domain/validators";
 
 const account = (user: { id: string; email: string; headline: string }) => ({
   id: user.id,

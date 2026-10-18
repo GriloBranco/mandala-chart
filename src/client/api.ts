@@ -1,6 +1,6 @@
 // Browser-side calls to the app's own API. Every call sends the session cookie.
 
-import { OTHER_ACCOUNT } from "./errors";
+import { OTHER_ACCOUNT } from "@/domain/errors";
 
 export { OTHER_ACCOUNT };
 

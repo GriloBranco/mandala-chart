@@ -6,7 +6,7 @@ import { errorText, fieldClass, PasswordInput } from "@/components/account/field
 import { Headline } from "@/components/shell/Headline";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
-import { api, ApiError } from "@/lib/api-client";
+import { api, ApiError } from "@/client/api";
 
 type Mode = "signin" | "signup";
 

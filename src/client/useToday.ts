@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { dayKey } from "@/lib/mandala";
+import { dayKey } from "@/domain/mandala";
 
 // The installed app can stay open for days. Re-read the date at midnight and whenever the
 // app comes back to the front, so "today" never shows yesterday's check-ins.

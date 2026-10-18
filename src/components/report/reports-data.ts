@@ -4,8 +4,8 @@
 // Lists are cached in memory, so going back to Reports paints at once and refreshes quietly.
 
 import { useSyncExternalStore } from "react";
-import { api } from "@/lib/api-client";
-import type { Report, ReportWithEvents } from "@/lib/types";
+import { api } from "@/client/api";
+import type { Report, ReportWithEvents } from "@/domain/types";
 
 /** Fired on window after a report is saved. Lists and the Today card refetch on it. */
 export const REPORT_SAVED_EVENT = "mandala:report-saved";

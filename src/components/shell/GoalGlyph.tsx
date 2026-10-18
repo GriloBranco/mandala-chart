@@ -1,6 +1,6 @@
 "use client";
 
-import { RING } from "@/lib/mandala";
+import { RING } from "@/domain/mandala";
 import { cn } from "@/components/ui/cn";
 
 /**
