@@ -1,6 +1,5 @@
 "use client";
 
-import { useImportBackup } from "@/components/account/useImportBackup";
 import { AsciiMandala } from "@/components/ascii/AsciiMandala";
 import { Headline } from "@/components/shell/Headline";
 import { Button } from "@/components/ui/Button";
@@ -8,7 +7,6 @@ import { navigate } from "@/client/nav";
 
 /** First run: no goals yet. */
 export function Welcome({ voice }: { voice: boolean }) {
-  const backup = useImportBackup();
   const lines: [string, string][] = [
     ["1", "goal in the middle, with a date"],
     ["8", "pillars around it that make it happen"],
@@ -37,15 +35,6 @@ export function Welcome({ voice }: { voice: boolean }) {
       <Button variant="primary" size="lg" className="mt-10 w-full max-w-[320px]" onClick={() => navigate({ name: "new" })}>
         Start your first goal
       </Button>
-      {backup.input}
-      <button
-        type="button"
-        className="mt-4 rounded-full px-3 py-1.5 text-[13px] text-muted hover:bg-soft hover:text-fg disabled:opacity-50"
-        disabled={backup.busy}
-        onClick={backup.pick}
-      >
-        {backup.busy ? "Importing…" : "Have a backup? Import it"}
-      </button>
     </div>
   );
 }

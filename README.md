@@ -20,8 +20,7 @@ Works in the browser on desktop and phone. On iPhone, open it in Safari and use 
   chart. You confirm each one before anything changes.
 - AI help (optional): suggest pillars and actions, sharpen vague items, and estimate leverage.
 - Works offline for edits: changes are saved on the device and sync when you are back online.
-- Account page: change password, download all your data, import a backup into a new account, sign out
-  everywhere, delete your account.
+- Account page: change password, download all your data, sign out everywhere, delete your account.
 
 ## Run it locally
 
@@ -73,7 +72,6 @@ or one IPv6 /64 block.
 | API requests | 600 per account per 10 minutes |
 | Goals | 50 per account, archived ones included |
 | Saved reports | 30 per account per day (UTC) |
-| Backup imports | 5 per network per day, only into an empty account, files up to 4 MB |
 
 Over a limit, the app says how long to wait. There is no limit shared by everyone for sign-in or
 sign-up, since one person could use it up and lock everyone else out.
@@ -105,7 +103,7 @@ Next.js 16 (App Router) on Vercel, Turso (libSQL) for data, Gemini for AI, Tailw
 src/
   app/          pages and API routes. Routes stay thin: check input, call src/server, answer.
   components/   the screens, one folder per feature, plus ui/ (buttons, sheets) and shared/
-  domain/       the chart rules, types, input checks and the backup format. No React, no I/O
+  domain/       the chart rules, types and input checks. No React, no I/O
   server/       server only: database, data access (repo/), accounts, limits, AI (ai/)
   client/       browser only: the store with the offline queue, API calls, navigation
   proxy.ts      sends signed-out visitors to /login
@@ -134,10 +132,3 @@ BASE_URL=https://your-app.vercel.app npm run test:e2e   # the same against a liv
 ```
 
 The browser tests create their own accounts and delete them at the end.
-
-## Backups
-
-"Download my data" saves everything in an account as one JSON file. "Import a backup" (on the
-account page, and on the welcome screen of a new account) loads such a file into an account that
-is still empty. Every goal, square and report gets a new id, so a file can go into a new account
-on any deployment. The format is in `src/domain/backup.ts`.

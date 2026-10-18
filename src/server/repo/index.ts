@@ -10,4 +10,4 @@
 export { createGoal, deleteGoal, getGoal, listActiveGoals, loadState, updateGoal } from "./goals";
 export { getCell, setCheckin, updateCell, updateCells } from "./cells";
 export { deleteReport, listEvents, listReports, listReportsWithEvents, saveReport } from "./reports";
-export { exportData, importData } from "./account";
+export { exportData } from "./account";
