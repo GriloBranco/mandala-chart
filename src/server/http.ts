@@ -3,7 +3,7 @@ import { connection, NextResponse, type NextRequest } from "next/server";
 import { ZodError, type ZodType } from "zod";
 import { readSession, SESSION_COOKIE, UID_COOKIE } from "./auth";
 import { HttpError, OTHER_ACCOUNT } from "@/domain/errors";
-import { AiError } from "./gemini";
+import { AiError } from "@/server/ai/gemini";
 import { clearSessionCookies, userFor } from "./session";
 import { budgetWait, spendBudget } from "./throttle";
 import type { User } from "./users";

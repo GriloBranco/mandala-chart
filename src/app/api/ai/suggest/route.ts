@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { suggest, suggestInputSchema } from "@/server/ai";
-import { requireAi } from "@/server/gemini";
+import { requireAi } from "@/server/ai/gemini";
 import { readJson, route } from "@/server/http";
 import { useQuota } from "@/server/quota";
 import { getGoal } from "@/server/repo";

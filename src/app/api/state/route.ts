@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { aiEnabled } from "@/server/gemini";
+import { aiEnabled } from "@/server/ai/gemini";
 import { route } from "@/server/http";
 import { addDays, dayKey } from "@/domain/mandala";
 import { loadState } from "@/server/repo";

@@ -1,5 +1,5 @@
 import "server-only";
-import { getDb } from "../db";
+import { getDb } from "@/server/db";
 import { groupCells, toCheckin, toEvent, toGoal, toReport, USER_CELLS } from "./shared";
 
 // Everything in one account at once: the "Download my data" file.

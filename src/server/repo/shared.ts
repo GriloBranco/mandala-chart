@@ -1,6 +1,6 @@
 import "server-only";
 import type { InStatement, InValue, Row } from "@libsql/client";
-import { getDb } from "../db";
+import { getDb } from "@/server/db";
 import { HttpError } from "@/domain/errors";
 import type { Cell, Checkin, EventType, Goal, ProgressEvent, Report, ReportSource } from "@/domain/types";
 

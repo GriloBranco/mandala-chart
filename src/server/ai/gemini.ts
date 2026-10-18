@@ -1,6 +1,6 @@
 import "server-only";
 import { GoogleGenAI, ThinkingLevel, type GenerateContentResponse, type Part } from "@google/genai";
-import { aiAllowed } from "./quota";
+import { aiAllowed } from "@/server/quota";
 
 // Server-only Gemini access. The key never reaches the browser. Every call is one stateless
 // generateContent request with any audio inline (never the Files API), so Google keeps no file.

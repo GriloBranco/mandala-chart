@@ -1,6 +1,6 @@
 import "server-only";
 import type { InStatement, ResultSet } from "@libsql/client";
-import { getDb } from "../db";
+import { getDb } from "@/server/db";
 import { HttpError } from "@/domain/errors";
 import { PILLAR_SLOT } from "@/domain/mandala";
 import type { AppState, Goal, GoalPatch, GoalWithCells } from "@/domain/types";

@@ -1,6 +1,6 @@
 import "server-only";
 import type { InStatement } from "@libsql/client";
-import { getDb } from "../db";
+import { getDb } from "@/server/db";
 import { HttpError } from "@/domain/errors";
 import { applyPatch, normalizePatch } from "@/domain/mandala";
 import type { Cell, CellPatch, EventType } from "@/domain/types";

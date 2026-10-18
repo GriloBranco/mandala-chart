@@ -7,7 +7,7 @@ import {
   audioMimeTypes,
   type ReportScope,
 } from "@/server/ai";
-import { requireAi } from "@/server/gemini";
+import { requireAi } from "@/server/ai/gemini";
 import { HttpError, readJson, route } from "@/server/http";
 import { dayKey } from "@/domain/mandala";
 import { useQuota } from "@/server/quota";

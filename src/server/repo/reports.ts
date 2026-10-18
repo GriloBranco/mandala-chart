@@ -1,6 +1,6 @@
 import "server-only";
 import type { InStatement, ResultSet } from "@libsql/client";
-import { getDb } from "../db";
+import { getDb } from "@/server/db";
 import { HttpError } from "@/domain/errors";
 import { applyPatch, normalizePatch, NOTES_MAX } from "@/domain/mandala";
 import type { ProgressEvent, ProposedUpdate, Report, ReportSource, ReportWithEvents } from "@/domain/types";
