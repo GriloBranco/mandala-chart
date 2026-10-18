@@ -57,6 +57,8 @@ const BUCKETS = {
       { scope: "account", max: 5 },
     ],
   },
+  /** Backup imports. Each can write megabytes into a new account, so new accounts cannot fill the database. */
+  import: { windowMs: 24 * 60 * MINUTE, limits: [{ scope: "client", max: 5 }] },
 } satisfies Record<string, Bucket>;
 
 /** API requests per signed-in account. Generous: a busy person stays far below it. */

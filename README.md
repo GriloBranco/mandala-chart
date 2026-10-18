@@ -20,7 +20,8 @@ Works in the browser on desktop and phone. On iPhone, open it in Safari and use 
   chart. You confirm each one before anything changes.
 - AI help (optional): suggest pillars and actions, sharpen vague items, and estimate leverage.
 - Works offline for edits: changes are saved on the device and sync when you are back online.
-- Account page: change password, download all your data, sign out everywhere, delete your account.
+- Account page: change password, download all your data, import a backup into a new account, sign out
+  everywhere, delete your account.
 
 ## Run it locally
 
@@ -60,7 +61,7 @@ Environment variables (see `.env.example`):
 ## Limits
 
 These keep a public deployment from being guessed at, flooded or run up. They are fixed in the code
-(`src/lib/throttle.ts`, `src/lib/repo.ts`), except the AI limits above. A network is one IP address,
+(`src/server/throttle.ts`, `src/server/repo`), except the AI limits above. A network is one IP address,
 or one IPv6 /64 block.
 
 | What | Limit |
@@ -72,6 +73,7 @@ or one IPv6 /64 block.
 | API requests | 600 per account per 10 minutes |
 | Goals | 50 per account, archived ones included |
 | Saved reports | 30 per account per day (UTC) |
+| Backup imports | 5 per network per day, only into an empty account, files up to 4 MB |
 
 Over a limit, the app says how long to wait. There is no limit shared by everyone for sign-in or
 sign-up, since one person could use it up and lock everyone else out.
@@ -97,10 +99,45 @@ sign-up, since one person could use it up and lock everyone else out.
 
 Next.js 16 (App Router) on Vercel, Turso (libSQL) for data, Gemini for AI, Tailwind for styles.
 
-- `src/lib`: accounts and sessions (`auth.ts`, `session.ts`, `users.ts`, `passwords.ts`), rate limits
-  and the request checks every API route runs (`throttle.ts`, `http.ts`), data access scoped per user
-  (`repo.ts`, `db.ts`), the chart rules (`mandala.ts`), the client store with the offline queue
-  (`store.ts`), AI prompts and limits (`ai.ts`, `quota.ts`).
-- `src/app/api`: JSON routes for accounts, goals, squares, check-ins, reports and AI.
-- `src/components`: the app shell, the chart, the new goal flow, leverage, Today, reports, the account
-  page, and the ASCII logo.
+### Where code goes
+
+```
+src/
+  app/          pages and API routes. Routes stay thin: check input, call src/server, answer.
+  components/   the screens, one folder per feature, plus ui/ (buttons, sheets) and shared/
+  domain/       the chart rules, types, input checks and the backup format. No React, no I/O
+  server/       server only: database, data access (repo/), accounts, limits, AI (ai/)
+  client/       browser only: the store with the offline queue, API calls, navigation
+  proxy.ts      sends signed-out visitors to /login
+```
+
+- A rule about the chart (what "done" means, how picks or progress are counted) goes in
+  `src/domain`, so the server and the screens use the same one.
+- Database access goes in `src/server/repo`, one file per topic (goals, cells, reports, account).
+  Every function takes the user's id first and touches only that user's rows.
+- AI features live in `src/server/ai`, one file per feature, with the shared coach prompt in
+  `coach.ts`. Prompt builders are pure, so they are tested without a key.
+- A screen goes in its feature folder under `src/components`. Logic used by more than one feature
+  moves to `src/domain` (pure) or `src/client` (browser).
+- `src/client/store.ts` is the single place that holds app state in the browser and syncs it. It
+  stays one module on purpose: its sync state must not be split across files.
+
+ESLint enforces the folder rules: `src/domain` imports nothing from the other folders, browser code
+never imports `src/server`, and server code never imports browser code.
+
+### Checks
+
+```bash
+npm run check      # types, lint and unit and server tests
+npm run test:e2e   # browser tests: builds the app and runs it on port 3140 with a fresh database
+BASE_URL=https://your-app.vercel.app npm run test:e2e   # the same against a live site
+```
+
+The browser tests create their own accounts and delete them at the end.
+
+## Backups
+
+"Download my data" saves everything in an account as one JSON file. "Import a backup" (on the
+account page, and on the welcome screen of a new account) loads such a file into an account that
+is still empty. Every goal, square and report gets a new id, so a file can go into a new account
+on any deployment. The format is in `src/domain/backup.ts`.

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Download, KeyRound, LogOut, MonitorSmartphone, Trash2 } from "lucide-react";
+import { ChevronDown, Download, KeyRound, LogOut, MonitorSmartphone, Trash2, Upload } from "lucide-react";
 import { useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { AsciiSpinner } from "@/components/ascii/AsciiSpinner";
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
@@ -13,6 +13,7 @@ import { actions, clearLocalData, getState, useAppState } from "@/client/store";
 import { toast } from "@/client/toast";
 import { errorText, PasswordInput } from "./fields";
 import { deleteAccount, downloadExport } from "./requests";
+import { useImportBackup } from "./useImportBackup";
 
 const LABEL = "font-mono text-[10.5px] tracking-[0.14em] text-faint uppercase";
 
@@ -41,6 +42,7 @@ function AccountBody() {
         <div className="-mx-3">
           <PasswordSection email={email} />
           <DownloadRow />
+          <ImportRow />
           <SignOutRow />
           <SignOutEverywhereSection />
         </div>
@@ -299,6 +301,25 @@ function DownloadRow() {
       busy={busy}
       onClick={() => void download()}
     />
+  );
+}
+
+/** Only offered while the account is empty: the server refuses an import into one with data. */
+function ImportRow() {
+  const { goals, status } = useAppState();
+  const { busy, input, pick } = useImportBackup();
+  if (status !== "ready" || (goals.length > 0 && !busy)) return null;
+  return (
+    <>
+      {input}
+      <Row
+        icon={<Upload size={17} />}
+        label={busy ? "Importing…" : "Import a backup"}
+        aside={<span className="shrink-0 font-mono text-[11px] text-faint">JSON</span>}
+        busy={busy}
+        onClick={pick}
+      />
+    </>
   );
 }
 
