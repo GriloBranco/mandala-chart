@@ -6,10 +6,13 @@ import { createClient, type Client } from "@libsql/client";
 let client: Client | undefined;
 let ready: Promise<void> | undefined;
 
+/** The local SQLite file: local.db, or MANDALA_DB_FILE (the tests use a fresh one per run). */
+const localFile = () => `file:${process.env.MANDALA_DB_FILE || "local.db"}`;
+
 function databaseUrl(): string {
   // Local development never touches the real database by accident (for example after
   // `vercel env pull`), unless asked to with MANDALA_REMOTE_DB=1.
-  if (process.env.NODE_ENV !== "production" && !process.env.MANDALA_REMOTE_DB) return "file:local.db";
+  if (process.env.NODE_ENV !== "production" && !process.env.MANDALA_REMOTE_DB) return localFile();
   const candidates = [
     process.env.TURSO_DATABASE_URL,
     process.env.LIBSQL_URL,
@@ -18,7 +21,7 @@ function databaseUrl(): string {
   const url = candidates.find((u) => u && /^(libsql|https?|wss?|file):/.test(u));
   if (url) return url;
   if (process.env.VERCEL) throw new Error("TURSO_DATABASE_URL is not set");
-  return "file:local.db";
+  return localFile();
 }
 
 function databaseToken(): string | undefined {
@@ -27,7 +30,7 @@ function databaseToken(): string | undefined {
 
 // Each entry is one schema version. Only ever append; never edit a shipped version.
 // Every row belongs to one user: goals, reports, events and check-ins carry user_id, and
-// squares belong to their goal. Every query in repo.ts filters by it.
+// squares belong to their goal. Every query in src/server/repo filters by it.
 const MIGRATIONS: string[][] = [
   [
     `CREATE TABLE IF NOT EXISTS users (

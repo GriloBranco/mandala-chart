@@ -43,3 +43,8 @@ next-env.d.ts
 
 # local database
 local.db*
+
+# tests
+/test-results/
+/playwright-report/
+e2e.db*
