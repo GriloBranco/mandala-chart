@@ -20,6 +20,8 @@ function cell(overrides: Partial<Cell> = {}): Cell {
     text: "Run 5 km",
     notes: "",
     kind: "task",
+    repeat: "day",
+    repeatOn: null,
     status: "todo",
     progress: 0,
     impact: null,

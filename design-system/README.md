@@ -11,8 +11,8 @@ The look of the app in one place. It describes what the app already does; the co
 ## Principles
 
 - Minimal white. Ink on paper, no shadows. Depth comes from fills (`soft`) and hairlines (`line`).
-- One accent, used rarely: the highest-leverage pillar, actions picked for this week, recording, and the
-  brief flash after an update. Never for decoration.
+- One accent, used rarely: the highest-leverage pillar, actions picked for this week, and the brief
+  flash after an update. Never for decoration.
 - The square is the core unit. Every chart (desktop 9x9, phone 3x3, new-goal steps, map) uses `Square`.
 - Everything you press is a pill.
 - Copy is short, plain and calm. Numbers over adjectives.
@@ -23,8 +23,8 @@ The look of the app in one place. It describes what the app already does; the co
 | ------------- | --------- | --------------------------------------------- |
 | `fg`          | `#111111` | Text, goal square, primary buttons            |
 | `bg`          | `#FFFFFF` | Page                                          |
-| `accent`      | `#FF4F00` | Lever ring, this-week dot, recording          |
-| `accent-soft` | `#FFF1EA` | Recording bar, flash, selection               |
+| `accent`      | `#FF4F00` | Lever ring, this-week dot                     |
+| `accent-soft` | `#FFF1EA` | Flash, selection                              |
 | `muted`       | `#6B6B6B` | Secondary text                                |
 | `faint`       | `#A3A3A3` | Placeholders, done items, status glyphs       |
 | `line-strong` | `#D6D6D6` | Input and secondary button borders            |

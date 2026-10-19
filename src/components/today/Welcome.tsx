@@ -6,16 +6,11 @@ import { Button } from "@/components/ui/Button";
 import { navigate } from "@/client/nav";
 
 /** First run: no goals yet. */
-export function Welcome({ voice }: { voice: boolean }) {
+export function Welcome() {
   const lines: [string, string][] = [
     ["1", "goal in the middle, with a date"],
     ["8", "pillars around it that make it happen"],
-    [
-      "64",
-      voice
-        ? "small actions. Pick 5-8 a week and report daily by voice."
-        : "small actions. Pick 5-8 a week and check them off daily.",
-    ],
+    ["64", "small actions. Pick 5-8 a week and check them off daily."],
   ];
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-76px-var(--safe-bottom))] w-full max-w-md flex-col items-center justify-center px-6 pt-[calc(var(--safe-top)+32px)] pb-10 lg:min-h-dvh">

@@ -29,6 +29,9 @@ export const cellPatchSchema = z
     text: z.string().max(200).optional(),
     notes: z.string().max(NOTES_MAX).optional(),
     kind: z.enum(["task", "habit"]).optional(),
+    repeat: z.enum(["day", "week", "month"]).optional(),
+    /** Weekday 0-6 for a weekly habit, day of the month 1-31 for a monthly one. */
+    repeatOn: z.number().int().min(0).max(31).nullable().optional(),
     status: z.enum(["todo", "doing", "done"]).optional(),
     progress: z.number().int().min(0).max(100).optional(),
     impact: rating.optional(),
@@ -52,24 +55,13 @@ export const checkinSchema = z.object({
   done: z.boolean(),
 });
 
-export const proposedUpdateSchema = z.object({
-  cellId: z.string().min(1),
-  status: z.enum(["todo", "doing", "done"]).optional(),
-  checkin: z.boolean().optional(),
-  note: z.string().max(500).optional(),
-  quote: z.string().max(500).default(""),
-  confidence: z.number().min(0).max(1).default(1),
-});
-
 export const saveReportSchema = z.object({
   /** Chosen by the client, so a retry after a lost response does not save the report twice. */
   id: z.uuid().optional(),
   goalId: z.string().min(1).nullable(),
-  source: z.enum(["voice", "text"]),
-  transcript: z.string().trim().min(1).max(20000),
+  text: z.string().trim().min(1).max(20000),
   summary: z.string().max(1000).default(""),
   day: daySchema,
-  updates: z.array(proposedUpdateSchema).max(64),
 });
 
 // ---------- accounts ----------

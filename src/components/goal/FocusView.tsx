@@ -5,16 +5,14 @@ import { useLayoutEffect, useMemo, useRef, type MouseEvent, type PointerEvent as
 import { RING, dayKey, fillCounts, goalProgress, isFilled, pillarProgress, ringIndex } from "@/domain/mandala";
 import { navigate } from "@/client/nav";
 import { useAppState } from "@/client/store";
-import type { Cell, Checkin, GoalWithCells } from "@/domain/types";
+import type { Checkin, GoalWithCells } from "@/domain/types";
 import { Block3x3, Square } from "@/components/shared/Square";
-import { SuggestionTray } from "@/components/shared/SuggestionTray";
 import { Button, IconButton } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { useReducedMotion } from "@/components/ui/hooks";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { clampClass, useSquareLines } from "./clamp";
-import { fillSquares } from "./edits";
-import { flashSquares, useChangeFlash } from "./flash";
+import { useChangeFlash } from "./flash";
 import {
   GOAL_COORD,
   actionCoord,
@@ -25,7 +23,6 @@ import {
   leverPillar,
   namedPillars,
   pillarCoord,
-  pillarName,
   squareLabel,
   weekCount,
   type ChartIndex,
@@ -164,8 +161,6 @@ export function FocusView({
     event.stopPropagation();
   }
 
-  const onFilled = (ids: string[]) => flashSquares(rootRef.current, ids);
-
   return (
     <div ref={rootRef} className="mx-auto w-full max-w-[560px] px-4 pt-4 pb-10">
       <div className="mx-auto" style={{ maxWidth: BLOCK_SIZE }}>
@@ -202,7 +197,7 @@ export function FocusView({
         </div>
 
         {pillar === null ? (
-          <CenterFooter goal={goal} index={index} checkins={checkins} today={today} onFilled={onFilled} />
+          <CenterFooter goal={goal} checkins={checkins} today={today} />
         ) : (
           <PillarFooter
             goal={goal}
@@ -212,7 +207,6 @@ export function FocusView({
             today={today}
             onStep={step}
             onEdit={onEdit}
-            onFilled={onFilled}
           />
         )}
       </div>
@@ -328,24 +322,11 @@ function MiniBar({ value }: { value: number }) {
   );
 }
 
-function CenterFooter({
-  goal,
-  index,
-  checkins,
-  today,
-  onFilled,
-}: {
-  goal: GoalWithCells;
-  index: ChartIndex;
-  checkins: Checkin[];
-  today: string;
-  onFilled: (ids: string[]) => void;
-}) {
+function CenterFooter({ goal, checkins, today }: { goal: GoalWithCells; checkins: Checkin[]; today: string }) {
   const counts = fillCounts(goal);
   const week = weekCount(goal);
   const progress = goalProgress(goal, checkins, today);
   const hint = chartHint(counts, week.actions, "phone");
-  const emptyPillars = index.pillars.filter((c): c is Cell => Boolean(c) && !isFilled(c));
 
   return (
     <div className="mt-5 space-y-4">
@@ -370,15 +351,6 @@ function CenterFooter({
         >
           Pick this week&apos;s actions
         </Button>
-      )}
-      {emptyPillars.length > 0 && (
-        <SuggestionTray
-          goalId={goal.id}
-          target="pillars"
-          existing={index.pillars.filter((c) => isFilled(c)).map((c) => c?.text ?? "")}
-          onPick={(suggestion) => onFilled(fillSquares(emptyPillars, [suggestion], "pillars"))}
-          onPickAll={(list) => onFilled(fillSquares(emptyPillars, list, "pillars"))}
-        />
       )}
     </div>
   );
@@ -457,7 +429,6 @@ function PillarFooter({
   today,
   onStep,
   onEdit,
-  onFilled,
 }: {
   goal: GoalWithCells;
   index: ChartIndex;
@@ -466,13 +437,11 @@ function PillarFooter({
   today: string;
   onStep: (direction: 1 | -1) => void;
   onEdit: (coord: Coord) => void;
-  onFilled: (ids: string[]) => void;
 }) {
   const named = isFilled(index.pillars[pillar]);
   const own = index.actions[pillar];
   const filled = own.filter((c) => isFilled(c)).length;
   const week = own.filter((c) => isMarked(c)).length;
-  const empty = own.filter((c): c is Cell => Boolean(c) && !isFilled(c));
   const progress = pillarProgress(goal, pillar, checkins, today);
   const names = namedPillars(index);
 
@@ -508,7 +477,7 @@ function PillarFooter({
         </IconButton>
       </div>
 
-      {!named ? (
+      {!named && (
         <p className="mt-3 text-center text-[13.5px] text-muted">
           Name the pillar first.{" "}
           <button
@@ -519,19 +488,6 @@ function PillarFooter({
             Name it
           </button>
         </p>
-      ) : (
-        empty.length > 0 && (
-          <SuggestionTray
-            key={`actions-${pillar}`}
-            goalId={goal.id}
-            target="actions"
-            pillar={pillar}
-            existing={goal.cells.filter((c) => c.slot >= 0 && isFilled(c)).map((c) => c.text)}
-            onPick={(suggestion) => onFilled(fillSquares(empty, [suggestion], "actions"))}
-            onPickAll={(list) => onFilled(fillSquares(empty, list, `actions to ${pillarName(index, pillar)}`))}
-            className="mt-3"
-          />
-        )
       )}
     </div>
   );

@@ -36,15 +36,6 @@ export function nextEmptyAction(goal: GoalWithCells, pillar: number, from: numbe
   return after(from).find((s) => !isFilled(actionAt(goal, pillar, s))) ?? null;
 }
 
-/** Empty slots clockwise, starting at `from` itself. */
-export function emptyActionSlots(goal: GoalWithCells, pillar: number, from: number): number[] {
-  return [from, ...after(from)].filter((s) => !isFilled(actionAt(goal, pillar, s)));
-}
-
-export function emptyPillarSlots(goal: GoalWithCells, from: number): number[] {
-  return [from, ...after(from)].filter((p) => !isFilled(pillarCell(goal, p)));
-}
-
 export function filledActionCount(goal: GoalWithCells, pillar: number): number {
   return actionCells(goal, pillar).filter(isFilled).length;
 }
@@ -74,6 +65,8 @@ export const CLEAR_PATCH: CellPatch = {
   text: "",
   notes: "",
   kind: "task",
+  repeat: "day",
+  repeatOn: null,
   status: "todo",
   active: false,
   impact: null,
@@ -86,6 +79,8 @@ export function restorePatch(cell: Cell): CellPatch {
     text: cell.text,
     notes: cell.notes,
     kind: cell.kind,
+    repeat: cell.repeat,
+    repeatOn: cell.repeatOn,
     status: cell.status,
     active: cell.active,
     // Undo keeps the original start, so habit strength and the week count survive.

@@ -6,7 +6,7 @@ import {
   PILLAR_SLOT,
   RING,
   gridCoord,
-  habitStrength,
+  routineStrength,
   isFilled,
   pillarLever,
   ringIndex,
@@ -139,7 +139,7 @@ export function leverPillar(index: ChartIndex): number | null {
 export function actionGlyph(cell: Cell | undefined, checkins: Checkin[], today: string): string | undefined {
   if (!isFilled(cell)) return undefined;
   if (cell.kind === "habit" && cell.active && cell.status !== "done") {
-    return strengthGlyph(habitStrength(cell.id, checkins, today));
+    return strengthGlyph(routineStrength(cell, checkins, today));
   }
   return statusGlyph(cell);
 }
@@ -175,7 +175,7 @@ export function weekCount(goal: GoalWithCells): { actions: number; pillars: numb
   return { actions, pillars: pillars.size };
 }
 
-/** Changes in what a square shows. Used to notice updates that came from elsewhere (a report). */
+/** Changes in what a square shows. Used to notice updates that came from elsewhere (another device). */
 export function squareSignature(cell: Cell, glyph: string | undefined, doneToday = false): string {
   return JSON.stringify([cell.text, cell.status, cell.active, cell.kind, glyph ?? "", doneToday]);
 }

@@ -2,7 +2,7 @@
 
 A goal app built on the Mandala chart method, the 9x9 grid Shohei Ohtani filled in during high school:
 one goal in the middle, 8 pillars around it, 8 actions for each pillar. You pick the highest-leverage
-actions each week, check them off, and report your day by voice or text.
+actions each week, check them off, and write a short report about your day.
 
 Works in the browser on desktop and phone. On iPhone, open it in Safari and use Share, then
 "Add to Home Screen" so it opens like an app.
@@ -16,9 +16,8 @@ Works in the browser on desktop and phone. On iPhone, open it in Safari and use 
   week (one per pillar where you can, actions that help two pillars first).
 - Today: this week's actions and daily routines (habits) with one-tap check-offs, under your own line
   of motivation that you can edit.
-- Voice reports: record a few minutes about your day. Gemini transcribes it and proposes updates to the
-  chart. You confirm each one before anything changes.
-- AI help (optional): suggest pillars and actions, sharpen vague items, and estimate leverage.
+- Reports: write a few lines about your day, for one goal or all of them. Each one is kept in a
+  history you can read back.
 - Works offline for edits: changes are saved on the device and sync when you are back online.
 - Account page: change password, download all your data, sign out everywhere, delete your account.
 
@@ -30,7 +29,7 @@ npm run dev
 ```
 
 Open http://localhost:3000 and create an account. Local development always uses a SQLite file
-(`local.db`). Without `GEMINI_API_KEY` the AI features are hidden.
+(`local.db`).
 
 ## Put it online
 
@@ -40,8 +39,7 @@ Open http://localhost:3000 and create an account. Local development always uses 
 
 The script logs in to Vercel if needed, creates the project, adds a Turso database through the Vercel
 Marketplace (the first time a browser tab asks you to accept Turso's terms), creates the session
-secret, sets an invite code (it offers a random one; type `open` to let anyone sign up), optionally
-adds a Gemini key, and deploys. It is safe to run again; it only does what is missing.
+secret, sets an invite code (it offers a random one; type `open` to let anyone sign up), and deploys. It is safe to run again; it only does what is missing.
 
 Environment variables (see `.env.example`):
 
@@ -49,18 +47,13 @@ Environment variables (see `.env.example`):
 | --- | --- | --- |
 | `SESSION_SECRET` | yes, in production | Signs the login cookie (32+ random characters) |
 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | yes, in production | Set by the Turso integration |
-| `GEMINI_API_KEY` | optional | Turns on AI and voice reports |
-| `GEMINI_MODEL` | optional | Overrides the default model |
 | `SIGNUP_CODE` | optional | Invite-only: new accounts must enter this code. Use a random one, not a word |
 | `SIGNUPS_CLOSED` | optional | Set to `1` to stop new accounts |
-| `AI_DAILY_LIMIT` | optional | Suggestions, Sharpen and Leverage calls per person per day (default 60, `0` turns them off) |
-| `REPORT_DAILY_LIMIT` | optional | Report analyses per person per day (default 15, `0` turns them off) |
-| `AI_GLOBAL_DAILY_LIMIT` | optional | AI calls per day for everyone together (default 1500, `0` turns AI off for everyone) |
 
 ## Limits
 
-These keep a public deployment from being guessed at, flooded or run up. They are fixed in the code
-(`src/server/throttle.ts`, `src/server/repo`), except the AI limits above. A network is one IP address,
+These keep a public deployment from being guessed at or flooded. They are fixed in the code
+(`src/server/throttle.ts`, `src/server/repo`). A network is one IP address,
 or one IPv6 /64 block.
 
 | What | Limit |
@@ -86,16 +79,10 @@ sign-up, since one person could use it up and lock everyone else out.
   page elsewhere cannot sign you in to its own account or act for you.
 - Sign out everywhere (on the account page) ends every session on every device. Changing the password
   does the same for every device but the one you are on.
-- The Gemini key stays on the server. Voice recordings are sent to Gemini inside the request and are
-  never stored, by this app or as files on Google's side. Only the transcript and the changes you
-  confirm are saved.
-- Daily AI limits per person and in total keep a public deployment from running up the Gemini bill.
-- Use a Gemini key from a Google Cloud project with billing turned on. On the paid tier Google does not
-  use prompts or answers to improve its products; on the free tier it may.
 
 ## How it is built
 
-Next.js 16 (App Router) on Vercel, Turso (libSQL) for data, Gemini for AI, Tailwind for styles.
+Next.js 16 (App Router) on Vercel, Turso (libSQL) for data, Tailwind for styles.
 
 ### Where code goes
 
@@ -104,7 +91,7 @@ src/
   app/          pages and API routes. Routes stay thin: check input, call src/server, answer.
   components/   the screens, one folder per feature, plus ui/ (buttons, sheets) and shared/
   domain/       the chart rules, types and input checks. No React, no I/O
-  server/       server only: database, data access (repo/), accounts, limits, AI (ai/)
+  server/       server only: database, data access (repo/), accounts, limits
   client/       browser only: the store with the offline queue, API calls, navigation
   proxy.ts      sends signed-out visitors to /login
 ```
@@ -113,8 +100,6 @@ src/
   `src/domain`, so the server and the screens use the same one.
 - Database access goes in `src/server/repo`, one file per topic (goals, cells, reports, account).
   Every function takes the user's id first and touches only that user's rows.
-- AI features live in `src/server/ai`, one file per feature, with the shared coach prompt in
-  `coach.ts`. Prompt builders are pure, so they are tested without a key.
 - A screen goes in its feature folder under `src/components`. Logic used by more than one feature
   moves to `src/domain` (pure) or `src/client` (browser).
 - `src/client/store.ts` is the single place that holds app state in the browser and syncs it. It

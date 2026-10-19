@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Puts Mandala online: Vercel hosting, a Turso database, the session secret, an invite code (or
-# open sign-up) and, optionally, Gemini. Safe to re-run: each step skips what already exists.
+# open sign-up). Safe to re-run: each step skips what already exists.
 # Secrets are never printed, except a generated invite code, since you need to share it.
 #
 #   ./scripts/setup-and-deploy.sh
@@ -8,8 +8,6 @@
 # Options (environment variables):
 #   PROJECT_NAME     Vercel project name (default: mandala-chart)
 #   VERCEL_SCOPE     Vercel team or username to deploy under (default: your current team)
-#   GEMINI_API_KEY   Gemini key to use instead of asking (use a key from your own Google Cloud project)
-#   GEMINI_ENV_FILE  Optional .env file to read GEMINI_API_KEY from
 #   SIGNUP_CODE      Invite code new accounts must enter, instead of asking. "open" lets anyone sign
 #                    up. Unset, the script offers a random code (also when it cannot ask).
 set -euo pipefail
@@ -18,7 +16,6 @@ cd "$(dirname "$0")/.."
 VERCEL=(npx --yes vercel@latest)
 if [ -n "${VERCEL_SCOPE:-}" ]; then VERCEL+=(--scope "$VERCEL_SCOPE"); fi
 PROJECT_NAME="${PROJECT_NAME:-mandala-chart}"
-GEMINI_ENV_FILE="${GEMINI_ENV_FILE:-}"
 
 step() { printf '\n== %s\n' "$1"; }
 has_env() { grep -qw "$1" <<<"$envs"; }
@@ -80,23 +77,6 @@ else
       echo "Share it with the people you invite. Vercel will not show it again."
     fi
   fi
-fi
-
-step "Gemini key (optional: AI help and voice reports)"
-if has_env GEMINI_API_KEY; then
-  echo "Already set."
-else
-  key="${GEMINI_API_KEY:-}"
-  if [ -z "$key" ] && [ -n "$GEMINI_ENV_FILE" ] && [ -f "$GEMINI_ENV_FILE" ]; then
-    # "|| true": grep fails when no line matches, and that must not stop the script.
-    key="$(grep -E '^(export[[:space:]]+)?GEMINI_API_KEY=' "$GEMINI_ENV_FILE" | head -1 | cut -d= -f2- | tr -d "\"' \r" || true)"
-    if [ -n "$key" ]; then echo "Using the key from $GEMINI_ENV_FILE (not printed)."; else echo "No GEMINI_API_KEY in $GEMINI_ENV_FILE."; fi
-  fi
-  if [ -z "$key" ]; then
-    read -r -s -p "Paste a Gemini API key (Enter to skip): " key
-    echo
-  fi
-  if [ -n "$key" ]; then add_secret GEMINI_API_KEY "$key"; else echo "Skipped. AI stays off until you add it."; fi
 fi
 
 step "Deploy"

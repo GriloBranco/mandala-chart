@@ -83,9 +83,9 @@ export function EditorSheet({
     onClose();
   };
 
-  const advance = (via: "enter" | "pick") => {
+  const advance = () => {
     if (next) onMove(next);
-    else if (via === "enter") textRef.current?.blur();
+    else textRef.current?.blur();
   };
 
   const footer = compact ? (

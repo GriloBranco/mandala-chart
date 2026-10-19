@@ -66,7 +66,7 @@ h1{margin:14px 0 0;font-size:44px;font-weight:600;letter-spacing:-.02em;line-hei
 .inp{height:48px;border:1px solid var(--line-strong);border-radius:999px;padding:0 20px;display:flex;align-items:center;font-size:15px;color:var(--faint);width:360px}
 .inp.f{border-color:var(--fg);color:var(--fg)}
 .ib{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line-strong)}
-.ib.p{background:var(--fg);border:0;color:#fff}.ib.a{background:var(--accent);border:0}
+.ib.p{background:var(--fg);border:0;color:#fff}
 /* today */
 .card{border:1px solid var(--line);border-radius:16px;padding:6px 18px}
 .trow{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
@@ -78,8 +78,6 @@ h1{margin:14px 0 0;font-size:44px;font-weight:600;letter-spacing:-.02em;line-hei
 .done{color:var(--faint);text-decoration:line-through}
 .prog{height:3px;background:var(--line);border-radius:3px;margin:10px 0 4px}.prog i{display:block;height:100%;width:62%;background:var(--fg);border-radius:3px}
 .hdr{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-family:var(--mono);padding-top:12px}
-.rec{display:flex;align-items:center;gap:14px;background:var(--accent-soft);border-radius:999px;padding:8px 8px 8px 18px;margin-top:14px}
-.rec .lvl{font-family:var(--mono);color:var(--accent);letter-spacing:.05em;font-size:14px;flex:1}
 .toast{background:var(--fg);color:#fff;border-radius:999px;padding:11px 18px;font-size:14px;display:inline-flex;gap:10px;align-items:center}
 .toast span{color:var(--faint)}
 .pills{display:flex;gap:8px;flex-wrap:wrap}
@@ -132,7 +130,7 @@ h1{margin:14px 0 0;font-size:44px;font-weight:600;letter-spacing:-.02em;line-hei
         <div class="chip"><div class="c" style="background:#1a7f4b"></div><div class="t">ok<span>#1A7F4B</span></div></div>
         <div class="chip"><div class="c" style="background:#c92a2a"></div><div class="t">danger<span>#C92A2A</span></div></div>
       </div>
-      <div class="rule"><b>Orange is rare.</b> Only for the lever (highest-leverage pillar), this-week markers and recording.</div>
+      <div class="rule"><b>Orange is rare.</b> Only for the lever (highest-leverage pillar), this-week markers and the flash after an update.</div>
     </div>
     <div>
       <div class="lbl"><b>03</b> Type · Geist + Geist Mono</div>
@@ -195,27 +193,25 @@ h1{margin:14px 0 0;font-size:44px;font-weight:600;letter-spacing:-.02em;line-hei
         </div>
         <div class="btns">
           <div class="ib"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
-          <div class="ib p"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg></div>
-          <div class="ib a"><svg width="14" height="14" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="#fff"/></svg></div>
+          <div class="ib p"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7.4 18.6a2 2 0 0 1-.9.5l-2.9.8.8-2.9a2 2 0 0 1 .5-.9z"/></svg></div>
           <div class="pills" style="margin-left:14px"><span class="pill on">Endurance</span><span class="pill">Nutrition</span><span class="pill">Sleep</span><span class="pill">Mindset</span></div>
         </div>
         <div class="seg"><div class="on">Sign in</div><div>Create account</div></div>
         <div style="display:flex;gap:12px"><div class="inp">Email</div><div class="inp f">sam@example.com</div></div>
-        <div style="display:flex;gap:16px;align-items:center"><div class="toast">Saved <span>· synced</span></div><div class="toast" style="background:var(--accent-soft);color:var(--accent)">3 actions updated from your report</div></div>
+        <div style="display:flex;gap:16px;align-items:center"><div class="toast">Saved <span>· synced</span></div><div class="toast" style="background:var(--accent-soft);color:var(--accent)">3 squares updated on another device</div></div>
       </div>
     </div>
   </div>
 
   <div class="row r3">
     <div>
-      <div class="lbl"><b>06</b> Today · check-offs + voice report</div>
+      <div class="lbl"><b>06</b> Today · check-offs</div>
       <div class="card">
         <div class="hdr"><span>TODAY · WED 18 OCT</span><span>5 / 8</span></div>
         <div class="prog"><i></i></div>
         <div class="trow"><span class="cc on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><path d="M5 12l5 5L20 7"/></svg></span><span class="done">Run 5 km before work</span><span class="pl">ENDURANCE</span></div>
         <div class="trow"><span class="cc half"></span><span>Prep lunches for 3 days</span><span class="pl">NUTRITION</span></div>
         <div class="trow"><span class="cc"></span><span>Phone out of the bedroom</span><span class="pl">SLEEP</span></div>
-        <div class="rec" style="margin-bottom:12px"><span class="lvl">▁▂▅▇▅▃▂▅▇▆▃▁ 0:14</span><div class="ib a" style="width:36px;height:36px"><svg width="12" height="12" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="#fff"/></svg></div></div>
       </div>
     </div>
     <div>

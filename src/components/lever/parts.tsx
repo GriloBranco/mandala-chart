@@ -6,18 +6,16 @@ import { cn } from "@/components/ui/cn";
 
 /**
  * The round "this week" toggle. Picked is filled with the accent (the chart's this-week
- * marker); an AI suggestion is a hollow accent ring until you take it.
+ * marker).
  */
 export function PickToggle({
   picked,
-  suggested = false,
   done = false,
   label,
   onChange,
   className,
 }: {
   picked: boolean;
-  suggested?: boolean;
   done?: boolean;
   label: string;
   onChange: (next: boolean) => void;
@@ -28,8 +26,8 @@ export function PickToggle({
       type="button"
       role="checkbox"
       aria-checked={done || picked}
-      aria-label={done ? `${label} (done)` : suggested && !picked ? `${label} (suggested)` : label}
-      title={done ? "Done" : picked ? "Picked for this week" : suggested ? "Suggested for this week" : "Add to this week"}
+      aria-label={done ? `${label} (done)` : label}
+      title={done ? "Done" : picked ? "Picked for this week" : "Add to this week"}
       disabled={done}
       onClick={() => onChange(!picked)}
       className={cn("group grid size-11 shrink-0 place-items-center rounded-full disabled:cursor-default", className)}
@@ -42,9 +40,7 @@ export function PickToggle({
             ? "border-line-strong bg-line-strong text-white"
             : picked
               ? "border-accent bg-accent text-white"
-              : suggested
-                ? "border-accent text-transparent"
-                : "border-line-strong text-transparent group-hover:border-fg",
+              : "border-line-strong text-transparent group-hover:border-fg",
         )}
       >
         <Check size={14} strokeWidth={3} />
@@ -132,19 +128,5 @@ export function ChipsToggle({
       {label}
       <ChevronDown size={12} className={cn("transition-transform", open && "rotate-180")} />
     </button>
-  );
-}
-
-/** A dashed "ghost" chip: an AI value you have not taken yet. */
-export function GhostChip({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex max-w-full items-center rounded-full border border-dashed border-line-strong px-2.5 py-1 text-xs text-muted",
-        className,
-      )}
-    >
-      <span className="truncate">{children}</span>
-    </span>
   );
 }

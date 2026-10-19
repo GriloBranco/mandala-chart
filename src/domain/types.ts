@@ -2,8 +2,9 @@
 
 export type GoalStatus = "active" | "achieved" | "archived";
 export type CellKind = "task" | "habit";
+/** How often a habit comes back. */
+export type Repeat = "day" | "week" | "month";
 export type CellStatus = "todo" | "doing" | "done";
-export type ReportSource = "voice" | "text";
 export type EventType = "status" | "progress" | "note" | "checkin" | "report" | "goal";
 
 export interface Goal {
@@ -26,6 +27,10 @@ export interface Cell {
   text: string;
   notes: string;
   kind: CellKind;
+  /** Habits only: every day, once a week or once a month. */
+  repeat: Repeat;
+  /** Weekday 0-6 (Sunday first) for a weekly habit, day of the month 1-31 for a monthly one. */
+  repeatOn: number | null;
   status: CellStatus;
   progress: number;
   /** 1-3. How much this moves the goal (for a pillar) or its pillar (for an action). */
@@ -55,8 +60,7 @@ export interface Checkin {
 export interface Report {
   id: string;
   goalId: string | null;
-  source: ReportSource;
-  transcript: string;
+  text: string;
   summary: string;
   day: string;
   createdAt: string;
@@ -83,7 +87,6 @@ export interface AppState {
   user: Account;
   goals: GoalWithCells[];
   checkins: Checkin[];
-  aiEnabled: boolean;
 }
 
 export type CellPatch = Partial<
@@ -92,6 +95,8 @@ export type CellPatch = Partial<
     | "text"
     | "notes"
     | "kind"
+    | "repeat"
+    | "repeatOn"
     | "status"
     | "progress"
     | "impact"
@@ -104,40 +109,3 @@ export type CellPatch = Partial<
 >;
 
 export type GoalPatch = Partial<Pick<Goal, "title" | "why" | "deadline" | "status" | "position">>;
-
-/** A change the AI proposes from a report. The user confirms it before it is applied. */
-export interface ProposedUpdate {
-  cellId: string;
-  status?: CellStatus;
-  /** Habits only: mark the report's day as done. */
-  checkin?: boolean;
-  note?: string;
-  /** The words from the report that support this change. */
-  quote: string;
-  /** 0-1. Low-confidence updates start unchecked in the review. */
-  confidence: number;
-}
-
-export interface ReportAnalysis {
-  transcript: string;
-  summary: string;
-  updates: ProposedUpdate[];
-}
-
-export interface ReportWithEvents extends Report {
-  events: ProgressEvent[];
-}
-
-export interface Suggestion {
-  text: string;
-  kind?: CellKind;
-  note?: string;
-}
-
-export interface LeverageAnalysis {
-  pillars: { pillar: number; impact: number; helps: number[]; reason: string }[];
-  actions: { cellId: string; impact: number; effort: number; helps: number[]; reason: string }[];
-  /** 5-8 actions for this week: one per pillar where possible, synergies first. */
-  picks: string[];
-  insight: string;
-}

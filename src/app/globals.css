@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Minimal white. One accent, used only for the lever/focus and the recording state. */
+/* Minimal white. One accent, used only for the lever/focus and this week's picks. */
 :root {
   --bg: #ffffff;
   --fg: #111111;

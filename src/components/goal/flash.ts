@@ -12,7 +12,7 @@ const FLASH_MS = 1400;
  * Runs on the DOM so a flash can replay without re-rendering the chart. Squares sit in
  * wrappers marked `data-cell`.
  */
-export function flashSquares(root: HTMLElement | null, ids: Iterable<string>) {
+function flashSquares(root: HTMLElement | null, ids: Iterable<string>) {
   if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const styles = getComputedStyle(document.documentElement);
   const soft = styles.getPropertyValue("--accent-soft").trim() || "#fff1ea";
@@ -35,8 +35,8 @@ export function flashSquares(root: HTMLElement | null, ids: Iterable<string>) {
 
 /**
  * Flashes squares whose text, status or glyph changed while the chart was open, unless this
- * screen made the change (or it is the square being edited). In practice: updates applied
- * from a report, or synced from another device.
+ * screen made the change (or it is the square being edited). In practice: changes synced
+ * from another device.
  */
 export function useChangeFlash(
   rootRef: RefObject<HTMLElement | null>,

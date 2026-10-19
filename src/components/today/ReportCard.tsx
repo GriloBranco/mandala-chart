@@ -1,14 +1,14 @@
 "use client";
 
-import { Mic, PenLine } from "lucide-react";
+import { PenLine } from "lucide-react";
 import { useId } from "react";
 import { sinceLabel, timeLabel } from "@/components/report/format";
 import { useLatestReport } from "@/components/report/reports-data";
 import { navigate } from "@/client/nav";
-import { openRecorder } from "@/client/recorder";
+import { openReport } from "@/client/report-sheet";
 
-/** "How did today go?" with the big mic. Once today's report is in, it shows its summary. */
-export function ReportCard({ today, voice }: { today: string; voice: boolean }) {
+/** "How did today go?" with a big write button. Once today's report is in, it shows its summary. */
+export function ReportCard({ today }: { today: string }) {
   const titleId = useId();
   const { report } = useLatestReport();
   const todays = report && report.day === today ? report : null;
@@ -17,7 +17,7 @@ export function ReportCard({ today, voice }: { today: string; voice: boolean }) 
   if (todays) meta = `REPORTED · ${timeLabel(todays.createdAt).toUpperCase()}`;
   else if (report) meta = `LAST REPORT · ${sinceLabel(report.day, today).toUpperCase()}`;
 
-  const summary = todays ? todays.summary.trim() || todays.transcript.trim().split("\n")[0] : null;
+  const summary = todays ? todays.summary.trim() || todays.text.trim().split("\n")[0] : null;
 
   return (
     <section aria-labelledby={titleId} className="rounded-[16px] border border-line p-4 sm:p-5">
@@ -32,35 +32,22 @@ export function ReportCard({ today, voice }: { today: string; voice: boolean }) 
         </div>
         <button
           type="button"
-          onClick={() => openRecorder(null, { typed: !voice })}
-          aria-label={voice ? (todays ? "Record another report" : "Record a report") : "Write a report"}
+          onClick={() => openReport(null)}
+          aria-label={todays ? "Write another report" : "Write a report"}
           className="grid size-14 shrink-0 place-items-center rounded-full bg-fg text-white shadow-[0_4px_14px_rgba(0,0,0,0.12)] transition-[transform,background-color] duration-150 hover:bg-black/80 active:scale-95"
         >
-          {voice ? <Mic size={24} strokeWidth={1.75} /> : <PenLine size={21} strokeWidth={1.75} />}
+          <PenLine size={21} strokeWidth={1.75} />
         </button>
       </div>
-      {(voice || meta) && (
-        <div className="-mb-2 mt-1 flex items-center justify-between gap-3">
-          {voice ? (
-            <button
-              type="button"
-              onClick={() => openRecorder(null, { typed: true })}
-              className="-ml-2 min-h-11 rounded-full px-2 text-[13px] text-muted transition-colors hover:text-fg"
-            >
-              Type instead
-            </button>
-          ) : (
-            <span />
-          )}
-          {meta && (
-            <button
-              type="button"
-              onClick={() => navigate({ name: "reports" })}
-              className="-mr-2 min-h-11 rounded-full px-2 font-mono text-[10.5px] tracking-[0.14em] text-faint transition-colors hover:text-muted"
-            >
-              {meta}
-            </button>
-          )}
+      {meta && (
+        <div className="-mb-2 mt-1 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => navigate({ name: "reports" })}
+            className="-mr-2 min-h-11 rounded-full px-2 font-mono text-[10.5px] tracking-[0.14em] text-faint transition-colors hover:text-muted"
+          >
+            {meta}
+          </button>
         </div>
       )}
     </section>

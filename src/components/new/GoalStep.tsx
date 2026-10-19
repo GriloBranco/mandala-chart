@@ -12,7 +12,6 @@ import { newUuid } from "@/client/uuid";
 import { actions, useAppState } from "@/client/store";
 import { toast } from "@/client/toast";
 import type { GoalPatch, GoalWithCells } from "@/domain/types";
-import { Sharpen } from "./Sharpen";
 import { Dock, LABEL, NavRow, StepBody, StepHeading } from "./StepParts";
 import { addMonths, deadlineFromText, formatDay, readDraft, writeDraft, type GoalDraft } from "./text";
 
@@ -21,7 +20,7 @@ import { addMonths, deadlineFromText, formatDay, readDraft, writeDraft, type Goa
  * this device, so closing never loses it; once it exists, edits save as you type.
  */
 export function GoalStep({ goal, onNext }: { goal?: GoalWithCells; onNext: (goal: GoalWithCells) => void }) {
-  const { aiEnabled, offline } = useAppState();
+  const { offline } = useAppState();
   const [draft] = useState(() => (goal ? null : readDraft()));
   const [title, setTitle] = useState(goal?.title ?? draft?.title ?? "");
   const [why, setWhy] = useState(goal?.why ?? draft?.why ?? "");
@@ -181,16 +180,6 @@ export function GoalStep({ goal, onNext }: { goal?: GoalWithCells; onNext: (goal
                 </li>
               ))}
             </ul>
-          )}
-          {aiEnabled && title.trim().length >= 6 && (
-            <Sharpen
-              role="goal"
-              text={title}
-              goalId={goal?.id}
-              deadline={deadline}
-              onPick={(option) => changeTitle(option)}
-              className="mt-3"
-            />
           )}
 
           <Deadline title={title} today={today} value={deadline} onChange={changeDeadline} />

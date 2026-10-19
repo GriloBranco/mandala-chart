@@ -4,7 +4,11 @@
 // 8 pillars; each outer block repeats one pillar in its center, surrounded by 8 actions.
 // Index 0-7 runs clockwise from 12 o'clock, as in the Harada method: T, TR, R, BR, B, BL, L, TL.
 
+import { addDays } from "./days";
+import { periodStrength, repeatOf } from "./repeat";
 import type { Cell, CellPatch, Checkin, GoalWithCells } from "./types";
+
+export { addDays, dayKey } from "./days";
 
 export const PILLAR_SLOT = -1;
 
@@ -133,21 +137,6 @@ export function actionLever(cell: Cell): number | null {
 export const IMPACT_LABELS = ["", "Low", "Medium", "High"] as const;
 export const EFFORT_LABELS = ["", "Easy", "Medium", "Hard"] as const;
 
-// ---------- days ----------
-
-/** Local calendar day as YYYY-MM-DD. */
-export function dayKey(date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-export function addDays(day: string, delta: number): string {
-  const [y, m, d] = day.split("-").map(Number);
-  return dayKey(new Date(y, m - 1, d + delta));
-}
-
 // ---------- progress ----------
 
 /**
@@ -174,10 +163,15 @@ export function strengthGlyph(strength: number): string {
   return "█";
 }
 
+/** Strength of any habit: by day for a daily one, by period for a weekly or monthly one. */
+export function routineStrength(cell: Cell, checkins: Checkin[], today: string): number {
+  return repeatOf(cell).repeat === "day" ? habitStrength(cell.id, checkins, today) : periodStrength(cell, checkins, today);
+}
+
 export function cellProgress(cell: Cell, checkins: Checkin[], today: string): number {
   if (cell.status === "done") return 1;
   if (cell.kind === "habit") {
-    return cell.active ? habitStrength(cell.id, checkins, today) : 0;
+    return cell.active ? routineStrength(cell, checkins, today) : 0;
   }
   return cell.status === "doing" ? 0.5 : 0;
 }
@@ -214,7 +208,7 @@ export interface TodayItem {
   cell: Cell;
 }
 
-/** Active habits (checked daily) and active tasks that are not done yet, across active goals. */
+/** Active habits (whatever their repeat) and active tasks that are not done yet, across active goals. */
 export function todayItems(goals: GoalWithCells[]): { habits: TodayItem[]; tasks: TodayItem[] } {
   const habits: TodayItem[] = [];
   const tasks: TodayItem[] = [];

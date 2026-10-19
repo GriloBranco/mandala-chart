@@ -3,7 +3,6 @@ import { connection, NextResponse, type NextRequest } from "next/server";
 import { ZodError, type ZodType } from "zod";
 import { readSession, SESSION_COOKIE, UID_COOKIE } from "./auth";
 import { HttpError, OTHER_ACCOUNT } from "@/domain/errors";
-import { AiError } from "@/server/ai/gemini";
 import { clearSessionCookies, userFor } from "./session";
 import { budgetWait, spendBudget } from "./throttle";
 import type { User } from "./users";
@@ -19,7 +18,7 @@ type Handler<C> = (request: NextRequest, context: C, user: User) => Promise<Resp
 const READS = new Set(["GET", "HEAD"]);
 
 function errorResponse(error: unknown): Response {
-  if (error instanceof HttpError || error instanceof AiError) {
+  if (error instanceof HttpError) {
     const response = NextResponse.json({ error: error.message }, { status: error.status });
     // Thrown when the account was deleted while this request ran: drop its cookies too.
     if (error.status === 401) clearSessionCookies(response);

@@ -97,7 +97,6 @@ export async function deleteUser(id: string): Promise<void> {
       { sql: "DELETE FROM events WHERE user_id = ?", args: [id] },
       { sql: "DELETE FROM reports WHERE user_id = ?", args: [id] },
       { sql: "DELETE FROM goals WHERE user_id = ?", args: [id] },
-      { sql: "DELETE FROM ai_usage WHERE user_id = ?", args: [id] },
       { sql: "DELETE FROM users WHERE id = ?", args: [id] },
     ],
     "write",

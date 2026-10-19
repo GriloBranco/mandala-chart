@@ -1,11 +1,12 @@
 "use client";
 
-import { ChevronDown, CircleUserRound, Mic, NotebookPen, Plus, Sun } from "lucide-react";
+import { ChevronDown, CircleUserRound, NotebookPen, PenLine, Plus, Sun } from "lucide-react";
 import { useMemo, useState } from "react";
 import { dayKey, goalProgress, isFilled, pillarCell, pillarProgress, todayItems } from "@/domain/mandala";
 import { navigate, useView, viewGoalId, type View } from "@/client/nav";
-import { openRecorder } from "@/client/recorder";
+import { openReport } from "@/client/report-sheet";
 import { useAppState } from "@/client/store";
+import { routineToday } from "@/domain/repeat";
 import type { GoalWithCells } from "@/domain/types";
 import { AccountSheet } from "@/components/account/AccountSheet";
 import { Button } from "@/components/ui/Button";
@@ -22,7 +23,12 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   const { active, done, routinesLeft } = useMemo(() => {
     const { habits } = todayItems(goals);
-    const left = habits.filter((h) => !checkins.some((c) => c.cellId === h.cell.id && c.day === today)).length;
+    // Weekly and monthly routines only count on the days they are due.
+    const left = habits.filter(
+      (h) =>
+        routineToday(h.cell, checkins, today).show &&
+        !checkins.some((c) => c.cellId === h.cell.id && c.day === today),
+    ).length;
     return {
       active: goals.filter((g) => g.status === "active"),
       done: goals.filter((g) => g.status !== "active"),
@@ -115,9 +121,9 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <Button
           variant="secondary"
           className="w-full"
-          icon={<Mic size={16} />}
+          icon={<PenLine size={16} />}
           onClick={() => {
-            openRecorder(viewGoalId(view));
+            openReport(viewGoalId(view));
             onNavigate?.();
           }}
         >

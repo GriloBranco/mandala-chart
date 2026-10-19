@@ -64,8 +64,16 @@ describe("two accounts never see or change each other's data", () => {
     await updateCell(alex.id, cellId, { text: "Read 10 pages", kind: "habit", active: true });
     await setCheckin(alex.id, cellId, DAY, true);
     reportId = (
-      await saveReport(alex.id, { goalId, source: "text", transcript: "Read today", summary: "", day: DAY, updates: [] })
+      await saveReport(alex.id, { goalId, text: "Read today", summary: "", day: DAY })
     ).id;
+  });
+
+  it("saves how often a habit repeats", async () => {
+    const goal = await createGoal(alex.id, { title: "Look sharp", pillars: ["Grooming"] });
+    const id = goal.cells.find((c) => c.pillar === 0 && c.slot === 1)!.id;
+    expect(goal.cells.find((c) => c.id === id)).toMatchObject({ repeat: "day", repeatOn: null });
+    const cell = await updateCell(alex.id, id, { text: "Cut my nails", kind: "habit", repeat: "week", repeatOn: 0 });
+    expect(cell).toMatchObject({ kind: "habit", repeat: "week", repeatOn: 0 });
   });
 
   it("shows nothing of the other account", async () => {
@@ -85,19 +93,11 @@ describe("two accounts never see or change each other's data", () => {
     expect(await status(getCell(bea.id, cellId))).toBe(404);
     expect(await status(updateCell(bea.id, cellId, { text: "Changed" }))).toBe(404);
     expect(await status(setCheckin(bea.id, cellId, "2026-03-02", true))).toBe(404);
-    expect(await status(saveReport(bea.id, { goalId, source: "text", transcript: "x", summary: "", day: DAY, updates: [] }))).toBe(404);
+    expect(await status(saveReport(bea.id, { goalId, text: "x", summary: "", day: DAY }))).toBe(404);
   });
 
-  it("skips the other account's squares in batch and report updates", async () => {
+  it("skips the other account's squares in batch updates", async () => {
     expect(await updateCells(bea.id, [{ id: cellId, patch: { text: "Changed" } }])).toEqual([]);
-    await saveReport(bea.id, {
-      goalId: null,
-      source: "text",
-      transcript: "Done with it",
-      summary: "",
-      day: DAY,
-      updates: [{ cellId, status: "done", note: "Not yours", quote: "", confidence: 1 }],
-    });
     const cell = await getCell(alex.id, cellId);
     expect(cell.text).toBe("Read 10 pages");
     expect(cell.notes).toBe("");
@@ -106,7 +106,7 @@ describe("two accounts never see or change each other's data", () => {
   it("refuses a client id that belongs to the other account", async () => {
     expect(await status(createGoal(bea.id, { id: goalId, title: "Copy" }))).toBe(409);
     expect(
-      await status(saveReport(bea.id, { id: reportId, goalId: null, source: "text", transcript: "x", summary: "", day: DAY, updates: [] })),
+      await status(saveReport(bea.id, { id: reportId, goalId: null, text: "x", summary: "", day: DAY })),
     ).toBe(409);
   });
 
@@ -149,7 +149,7 @@ describe("deleting an account", () => {
   it("removes everything in it", async () => {
     const user = await newAccount();
     const goal = await createGoal(user.id, { title: "Gone soon" });
-    await saveReport(user.id, { goalId: goal.id, source: "text", transcript: "x", summary: "", day: DAY, updates: [] });
+    await saveReport(user.id, { goalId: goal.id, text: "x", summary: "", day: DAY });
     await deleteUser(user.id);
     const data = await exportData(user.id);
     expect([data.goals, data.reports, data.events, data.checkins].flat()).toEqual([]);

@@ -16,17 +16,16 @@ import {
 import { dayKey, fillCounts, gridCoord, isFilled, pillarProgress, ringIndex } from "@/domain/mandala";
 import { navigate } from "@/client/nav";
 import { useAppState } from "@/client/store";
-import type { Cell, Checkin, GoalWithCells } from "@/domain/types";
+import type { Checkin, GoalWithCells } from "@/domain/types";
 import { weekInfo } from "@/domain/week";
 import { Block3x3, Square } from "@/components/shared/Square";
-import { SuggestionTray } from "@/components/shared/SuggestionTray";
 import { Button, IconButton } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { CellEditor, type EditorTarget } from "./CellEditor";
 import { clampClass, useSquareLines } from "./clamp";
-import { clearSquare, fillSquares } from "./edits";
-import { flashSquares, useChangeFlash } from "./flash";
+import { clearSquare } from "./edits";
+import { useChangeFlash } from "./flash";
 import {
   GOAL_COORD,
   blockOf,
@@ -116,11 +115,11 @@ export function DesktopChart({
     gridRef.current?.querySelector<HTMLElement>(`[data-rc="${coordKey(coord)}"] > button`)?.focus();
   }
 
-  function advance(via: "enter" | "pick") {
+  function advance() {
     if (!sel) return;
     const next = nextEmptyInBlock(index, sel);
-    if (next) select(next, { focusText: via === "enter" });
-    else if (via === "enter") focusSquare(sel);
+    if (next) select(next, { focusText: true });
+    else focusSquare(sel);
   }
 
   useImperativeHandle(ref, () => ({ editGoal: () => select(GOAL_COORD, { focusText: true }) }));
@@ -206,8 +205,6 @@ export function DesktopChart({
   useChangeFlash(gridRef, goal, checkins, glyphs, today, selectedCell?.id ?? null);
   useSquareLines(gridRef, { scaleFont: true });
 
-  const onFilled = (ids: string[]) => flashSquares(gridRef.current, ids);
-
   function onBackground(event: MouseEvent<HTMLDivElement>) {
     if ((event.target as HTMLElement).closest("button, a, input, textarea, select")) return;
     if (sel) select(null);
@@ -262,7 +259,6 @@ export function DesktopChart({
             onAdvance={advance}
             onEscape={() => focusSquare(sel)}
             onOpenPillar={(p) => select(pillarCoord(p, true), { focusText: true })}
-            onFilled={onFilled}
           />
         ) : (
           <Overview
@@ -272,7 +268,6 @@ export function DesktopChart({
             today={today}
             lever={lever}
             onSelect={(coord, focusText) => select(coord, { focusText })}
-            onFilled={onFilled}
           />
         )}
       </aside>
@@ -378,7 +373,6 @@ function Inspector({
   onAdvance,
   onEscape,
   onOpenPillar,
-  onFilled,
 }: {
   goal: GoalWithCells;
   index: ChartIndex;
@@ -386,10 +380,9 @@ function Inspector({
   lever: number | null;
   textRef: RefObject<HTMLTextAreaElement | null>;
   onClose: () => void;
-  onAdvance: (via: "enter" | "pick") => void;
+  onAdvance: () => void;
   onEscape: () => void;
   onOpenPillar: (pillar: number) => void;
-  onFilled: (ids: string[]) => void;
 }) {
   const ref = squareAt(coord);
   const cell = cellAt(index, ref);
@@ -431,7 +424,6 @@ function Inspector({
             onAdvance={onAdvance}
             onEscape={onEscape}
             onOpenPillar={onOpenPillar}
-            onFilled={onFilled}
           />
         ) : (
           <p className="text-sm text-muted">This square is not loaded yet.</p>
@@ -454,7 +446,6 @@ function Overview({
   today,
   lever,
   onSelect,
-  onFilled,
 }: {
   goal: GoalWithCells;
   index: ChartIndex;
@@ -462,12 +453,10 @@ function Overview({
   today: string;
   lever: number | null;
   onSelect: (coord: Coord, focusText: boolean) => void;
-  onFilled: (ids: string[]) => void;
 }) {
   const counts = fillCounts(goal);
   const week = weekCount(goal);
   const hint = chartHint(counts, week.actions, "desktop");
-  const emptyPillars = index.pillars.filter((c): c is Cell => Boolean(c) && !isFilled(c));
   // Same weekly rule as Today and Leverage, in local days.
   const newWeek = weekInfo(goal, today).due;
 
@@ -529,16 +518,6 @@ function Overview({
           </ul>
         )}
         {hint && <p className="pt-1 text-[13px] leading-relaxed text-muted">{hint}</p>}
-        {emptyPillars.length > 0 && (
-          <SuggestionTray
-            goalId={goal.id}
-            target="pillars"
-            existing={index.pillars.filter((c) => isFilled(c)).map((c) => c?.text ?? "")}
-            onPick={(suggestion) => onFilled(fillSquares(emptyPillars, [suggestion], "pillars"))}
-            onPickAll={(list) => onFilled(fillSquares(emptyPillars, list, "pillars"))}
-            className="pt-1"
-          />
-        )}
       </Field>
 
       {counts.actions > 0 && (

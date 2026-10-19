@@ -2,23 +2,19 @@
 
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
-import { SuggestionTray } from "@/components/shared/SuggestionTray";
 import { Button, IconButton } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { useMediaQuery } from "@/components/ui/hooks";
-import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
-import { isFilled, PILLAR_SLOT } from "@/domain/mandala";
-import { actions, goalById, useAppState } from "@/client/store";
+import { dayKey, isFilled, PILLAR_SLOT } from "@/domain/mandala";
+import { actions, goalById } from "@/client/store";
 import { toast } from "@/client/toast";
-import type { Cell, CellKind, CellPatch, GoalWithCells, Suggestion } from "@/domain/types";
+import type { Cell, CellPatch, GoalWithCells } from "@/domain/types";
 import { namedPillars, pillarName } from "@/domain/week";
 import { Composer } from "./Composer";
 import { FocusGrid } from "./FocusGrid";
-import { Sharpen } from "./Sharpen";
 import {
   actionAt,
   CLEAR_PATCH,
-  emptyActionSlots,
   filledActionCount,
   firstEmptyAction,
   firstPillarToFill,
@@ -28,12 +24,9 @@ import {
   stepPillar,
 } from "./slots";
 import { Dock, keepFocus, LABEL, NavRow, StepBody } from "./StepParts";
-import { actionNudges, guessKind } from "./text";
-
-const KINDS: SegmentedOption<CellKind>[] = [
-  { value: "task", label: "Task" },
-  { value: "habit", label: "Habit" },
-];
+import { actionNudges } from "./text";
+import { HowOftenPicker, RepeatDayPicker } from "@/components/shared/HowOften";
+import { guessHowOften, howOftenPatch, type HowOften } from "@/domain/repeat";
 
 /** Step 3: 8 actions around each pillar, one pillar at a time, with one Enter chain for all 64. */
 export function ActionsStep({
@@ -52,7 +45,6 @@ export function ActionsStep({
   onNext: () => void;
   onEditPillar: (pillar: number) => void;
 }) {
-  const { aiEnabled } = useAppState();
   const fine = useMediaQuery("(hover: hover) and (pointer: fine)");
   const inputRef = useRef<HTMLInputElement>(null);
   // Squares whose kind you set by hand (never auto-guessed again), and ones the guess made a habit.
@@ -104,15 +96,16 @@ export function ActionsStep({
     inputRef.current?.focus();
   };
 
-  /** The kind follows the text, but only until the user picks Task or Habit by hand. */
+  /** Kind and repeat follow the text, but only until the user picks one by hand. */
   const kindPatch = (target: Cell, value: string): CellPatch => {
     if (touched.current.has(target.id)) return {};
-    const guess = guessKind(value);
-    if (guess === "habit" && target.kind === "task") {
-      autoHabit.current.add(target.id);
-      return { kind: "habit" };
+    const guess = guessHowOften(value);
+    if (guess.choice !== "task") {
+      if (target.kind === "task") autoHabit.current.add(target.id);
+      if (!autoHabit.current.has(target.id)) return {};
+      return howOftenPatch(target, guess.choice, dayKey(), guess.on);
     }
-    if (guess === "task" && target.kind === "habit" && autoHabit.current.has(target.id)) {
+    if (target.kind === "habit" && autoHabit.current.has(target.id)) {
       autoHabit.current.delete(target.id);
       return { kind: "task" };
     }
@@ -124,11 +117,17 @@ export function ActionsStep({
     actions.updateCell(cell.id, { text: value, ...kindPatch(cell, value) }, { debounce: true });
   };
 
-  const setKind = (kind: CellKind) => {
+  const setHowOften = (choice: HowOften) => {
     if (!cell) return;
     touched.current.add(cell.id);
     autoHabit.current.delete(cell.id);
-    actions.updateCell(cell.id, { kind });
+    actions.updateCell(cell.id, howOftenPatch(cell, choice, dayKey()));
+  };
+
+  const setRepeatOn = (on: number) => {
+    if (!cell) return;
+    touched.current.add(cell.id);
+    actions.updateCell(cell.id, { repeatOn: on });
   };
 
   const enter = (raw: string) => {
@@ -156,41 +155,6 @@ export function ActionsStep({
     actions.updateCell(current.id, CLEAR_PATCH);
     toast("Action cleared", { action: { label: "Undo", run: () => actions.updateCell(current.id, before) } });
     inputRef.current?.focus();
-  };
-
-  const place = (suggestion: Suggestion) => {
-    const g = latest();
-    const target = !isFilled(actionAt(g, pillar, slot)) ? slot : nextEmptyAction(g, pillar, slot);
-    const targetCell = target === null ? undefined : actionAt(g, pillar, target);
-    if (target === null || !targetCell) {
-      toast(`${name} is full. Clear a square to add another.`);
-      return;
-    }
-    actions.updateCell(targetCell.id, { text: suggestion.text, kind: suggestion.kind ?? guessKind(suggestion.text) });
-    setPos({ pillar, slot: nextEmptyAction(latest(), pillar, target) ?? target });
-  };
-
-  const placeAll = (items: Suggestion[]) => {
-    const g = latest();
-    const updates = emptyActionSlots(g, pillar, slot)
-      .slice(0, items.length)
-      .flatMap((s, i) => {
-        const target = actionAt(g, pillar, s);
-        const kind = items[i].kind ?? guessKind(items[i].text);
-        return target ? [{ id: target.id, patch: { text: items[i].text, kind } }] : [];
-      });
-    if (!updates.length) {
-      toast(`${name} is full. Clear a square to add another.`);
-      return;
-    }
-    actions.updateCells(updates);
-    toast(`Added ${updates.length} to ${name}`, {
-      action: {
-        label: "Undo",
-        run: () => actions.updateCells(updates.map((u) => ({ id: u.id, patch: { text: "", kind: "task" as const } }))),
-      },
-    });
-    setPos({ pillar, slot: firstEmptyAction(latest(), pillar) ?? slot });
   };
 
   const prev = () => goTo(stepPillar(goal, pillar, -1));
@@ -279,14 +243,9 @@ export function ActionsStep({
               hint={hints.length ? hints.slice(0, 2).join(" ") : "Can you tick it off? Is it in your control?"}
               extra={
                 isFilled(cell) ? (
-                  <span onPointerDown={keepFocus}>
-                    <Segmented
-                      size="sm"
-                      label="Kind"
-                      value={cell.kind}
-                      options={KINDS}
-                      onChange={(kind) => kind && setKind(kind)}
-                    />
+                  <span onPointerDown={keepFocus} className="flex flex-wrap items-center justify-end gap-2">
+                    <HowOftenPicker size="sm" cell={cell} onPick={setHowOften} />
+                    <RepeatDayPicker cell={cell} onPick={setRepeatOn} />
                   </span>
                 ) : null
               }
@@ -298,21 +257,6 @@ export function ActionsStep({
               onBlur={() => onComposerFocus(false)}
               onSubmit={onNext}
             />
-            {aiEnabled && !typing && hints.length > 0 && text.trim().length > 3 && (
-              <Sharpen
-                key={cell?.id}
-                role="action"
-                text={text}
-                goalId={goal.id}
-                pillar={pillar}
-                keepKeyboard
-                onPick={(option) => {
-                  if (!cell) return;
-                  actions.updateCell(cell.id, { text: option, ...kindPatch(cell, option) });
-                }}
-                className="mt-2"
-              />
-            )}
           </div>
 
           {!typing && (
@@ -321,15 +265,6 @@ export function ActionsStep({
                 Things you can tick off and that are in your control: inputs, not outcomes. &ldquo;Post 2 videos a
                 day&rdquo;, not &ldquo;get 10M views&rdquo;.
               </p>
-              <SuggestionTray
-                key={pillar}
-                goalId={goal.id}
-                target="actions"
-                pillar={pillar}
-                existing={goal.cells.filter((c) => c.slot !== PILLAR_SLOT).map((c) => c.text)}
-                onPick={place}
-                onPickAll={placeAll}
-              />
             </div>
           )}
         </div>

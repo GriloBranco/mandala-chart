@@ -299,7 +299,7 @@ function Intro({ signupsOpen, delay }: { signupsOpen: boolean; delay: number }) 
         ))}
       </ol>
       <p className="mt-5 border-t border-line pt-4 text-[13px] leading-relaxed text-muted">
-        Your goals are private to your account. Voice notes are transcribed by Gemini and never stored.
+        Your goals are private to your account.
       </p>
       {!signupsOpen && <p className="mt-2 text-[13px] leading-relaxed text-muted">New accounts are closed right now.</p>}
     </div>

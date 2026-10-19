@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarMinus, ChevronDown, ChevronRight, Circle, CircleDot, LayoutGrid, Mic, PenLine, Plus, X } from "lucide-react";
+import { CalendarMinus, ChevronDown, ChevronRight, Circle, CircleDot, LayoutGrid, PenLine, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { daysBetween, longDate, shortGoalTitle } from "@/components/report/format";
 import { GoalGlyph } from "@/components/shell/GoalGlyph";
@@ -11,9 +11,10 @@ import { cn } from "@/components/ui/cn";
 import { useIsDesktop, useMediaQuery } from "@/components/ui/hooks";
 import { fillCounts, goalProgress, isFilled, pillarCell, pillarProgress, type TodayItem } from "@/domain/mandala";
 import { navigate, type View } from "@/client/nav";
-import { openRecorder } from "@/client/recorder";
+import { openReport } from "@/client/report-sheet";
 import { actions, localKey, useAppState } from "@/client/store";
 import { toast } from "@/client/toast";
+import { periodWord, repeatLabel, repeatOf, routineToday, shortDay } from "@/domain/repeat";
 import type { CellStatus, Checkin, GoalWithCells } from "@/domain/types";
 import { ReportCard } from "./ReportCard";
 import { buildToday, contextLine, type IdleGoal, type SetupStep } from "./today-model";
@@ -59,13 +60,13 @@ function readDismissed(): Record<string, string> {
 }
 
 export function TodayView() {
-  const { goals, aiEnabled } = useAppState();
-  if (!goals.length) return <Welcome voice={aiEnabled} />;
+  const { goals } = useAppState();
+  if (!goals.length) return <Welcome />;
   return <TodayList />;
 }
 
 function TodayList() {
-  const { goals, checkins, aiEnabled, offline } = useAppState();
+  const { goals, checkins, offline } = useAppState();
   const today = useToday();
   const isDesktop = useIsDesktop();
   // Mouse users get a "..." menu on hover; touch users long-press a row.
@@ -90,7 +91,16 @@ function TodayList() {
   const model = useMemo(() => buildToday(goals, checkins, today, fading), [goals, checkins, today, fading]);
   const showGoal = model.activeGoals.length > 1;
   const habitsDone = model.habits.filter((item) => model.checkedToday.has(item.cell.id)).length;
-  const hasOpen = model.habits.length > 0 || model.tasks.some((item) => item.cell.status !== "done");
+  const hasOpen =
+    model.habits.length > 0 || model.later.length > 0 || model.tasks.some((item) => item.cell.status !== "done");
+
+  /** A weekly or monthly routine says when it is due, and since when it is late. */
+  const routineContext = (item: TodayItem) => {
+    const context = contextLine(item, showGoal);
+    if (repeatOf(item.cell).repeat === "day") return context;
+    const late = routineToday(item.cell, checkins, today).lateSince;
+    return `${late ? `Due ${shortDay(late, today)}` : repeatLabel(item.cell)} · ${context}`;
+  };
 
   // ---------- actions ----------
 
@@ -106,7 +116,8 @@ function TodayList() {
       return;
     }
     const left = model.habits.filter((h) => h.cell.id !== id && !model.checkedToday.has(h.cell.id)).length;
-    toast(left === 0 && model.habits.length > 1 ? "All routines done today" : "Done for today", { action: undo });
+    const doneFor = `Done for ${periodWord(item.cell)}`;
+    toast(left === 0 && model.habits.length > 1 ? "All routines done today" : doneFor, { action: undo });
   };
 
   const setTaskDone = (item: TodayItem, done: boolean) => {
@@ -187,7 +198,6 @@ function TodayList() {
 
   // ---------- layout ----------
 
-  const voice = aiEnabled;
   const quietIdle = hasOpen ? model.idle.filter(({ goal }) => !isHidden(`idle:${goal.id}`)) : [];
   const quietRollout = model.rollout.filter((goal) => !isHidden(`rollout:${goal.id}`));
 
@@ -201,11 +211,11 @@ function TodayList() {
             <Button
               variant="secondary"
               size="sm"
-              icon={voice ? <Mic size={15} /> : <PenLine size={15} />}
+              icon={<PenLine size={15} />}
               title="Shortcut: R"
-              onClick={() => openRecorder(null, { typed: !voice })}
+              onClick={() => openReport(null)}
             >
-              {voice ? "Record" : "Write report"}
+              Write report
             </Button>
           ) : undefined
         }
@@ -213,7 +223,7 @@ function TodayList() {
 
       <div className="mx-auto w-full max-w-[720px] px-4 pt-6 pb-12 lg:px-8 lg:pt-10">
         <Headline editable className="mb-6 text-[26px] leading-[1.15] lg:mb-9 lg:text-[34px] lg:leading-[1.12]" />
-        <ReportCard today={today} voice={voice} />
+        <ReportCard today={today} />
 
         {model.habits.length > 0 && (
           <Section
@@ -225,7 +235,7 @@ function TodayList() {
                 <HabitRow
                   key={item.cell.id}
                   item={item}
-                  context={contextLine(item, showGoal)}
+                  context={routineContext(item)}
                   done={model.checkedToday.has(item.cell.id)}
                   checkins={checkins}
                   today={today}
@@ -234,6 +244,30 @@ function TodayList() {
                   menu={rowMenu(item)}
                   onLongPress={longPress(item)}
                 />
+              ))}
+            </ul>
+          </Section>
+        )}
+
+        {model.later.length > 0 && (
+          <Section label={model.habits.length > 0 ? "LATER" : "ROUTINES"}>
+            <ul className="divide-y divide-line">
+              {model.later.map(({ item, next }) => (
+                <li key={item.cell.id}>
+                  <button
+                    type="button"
+                    onClick={() => openChart(item)}
+                    className="flex min-h-12 w-full items-center gap-3 py-2 text-left"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] text-muted">{item.cell.text}</span>
+                      <span className="block truncate text-[12.5px] text-faint">
+                        {repeatLabel(item.cell)} · {contextLine(item, showGoal)}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-[12.5px] text-faint">Next {shortDay(next, today)}</span>
+                  </button>
+                </li>
               ))}
             </ul>
           </Section>

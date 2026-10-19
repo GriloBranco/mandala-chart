@@ -3,10 +3,6 @@
 import { actionHints, dayKey } from "@/domain/mandala";
 import { localKey } from "@/client/store";
 
-// ---------- kind ----------
-
-export { guessKind } from "@/domain/kind";
-
 // ---------- hints ----------
 
 function same(a: string, b: string): boolean {

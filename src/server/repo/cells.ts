@@ -4,7 +4,7 @@ import { getDb } from "@/server/db";
 import { HttpError } from "@/domain/errors";
 import { applyPatch, normalizePatch } from "@/domain/mandala";
 import type { Cell, CellPatch, EventType } from "@/domain/types";
-import { eventStatement, type Guard, now, placeholders, stillOwned, toCell, USER_CELLS } from "./shared";
+import { eventStatement, now, placeholders, stillOwned, toCell, USER_CELLS } from "./shared";
 
 // Squares: edits one at a time or in a batch, and daily check-ins of habits.
 
@@ -15,7 +15,7 @@ export async function getCell(userId: string, id: string): Promise<Cell> {
   return toCell(result.rows[0]);
 }
 
-export async function getCells(userId: string, ids: string[]): Promise<Map<string, Cell>> {
+async function getCells(userId: string, ids: string[]): Promise<Map<string, Cell>> {
   if (!ids.length) return new Map();
   const db = await getDb();
   const result = await db.execute({
@@ -25,7 +25,7 @@ export async function getCells(userId: string, ids: string[]): Promise<Map<strin
   return new Map(result.rows.map((row) => [String(row.id), toCell(row)]));
 }
 
-export function describeChange(before: Cell, patch: CellPatch): { type: EventType; detail: string } | null {
+function describeChange(before: Cell, patch: CellPatch): { type: EventType; detail: string } | null {
   const name = before.text || "Untitled";
   if (patch.status && patch.status !== before.status) {
     const label = { todo: "To do", doing: "In progress", done: "Done" }[patch.status];
@@ -40,8 +40,8 @@ export function describeChange(before: Cell, patch: CellPatch): { type: EventTyp
   return null;
 }
 
-/** An UPDATE for a square already checked to belong to the user; with a guard, only while it holds. */
-export function cellUpdateStatement(before: Cell, patch: CellPatch, guard?: Guard): InStatement | null {
+/** An UPDATE for a square already checked to belong to the user. */
+function cellUpdateStatement(before: Cell, patch: CellPatch): InStatement | null {
   const sets: string[] = [];
   const args: (string | number | null)[] = [];
   const add = (column: string, value: string | number | null) => {
@@ -51,6 +51,8 @@ export function cellUpdateStatement(before: Cell, patch: CellPatch, guard?: Guar
   if (patch.text !== undefined) add("text", patch.text);
   if (patch.notes !== undefined) add("notes", patch.notes);
   if (patch.kind !== undefined) add("kind", patch.kind);
+  if (patch.repeat !== undefined) add("repeat", patch.repeat);
+  if (patch.repeatOn !== undefined) add("repeat_on", patch.repeatOn);
   if (patch.status !== undefined) {
     add("status", patch.status);
     if (patch.status !== before.status) add("done_at", patch.status === "done" ? (patch.doneAt ?? now()) : null);
@@ -66,8 +68,8 @@ export function cellUpdateStatement(before: Cell, patch: CellPatch, guard?: Guar
   }
   if (!sets.length) return null;
   return {
-    sql: `UPDATE cells SET ${sets.join(", ")}, updated_at = ? WHERE id = ?${guard ? ` AND ${guard.sql}` : ""}`,
-    args: [...args, now(), before.id, ...(guard?.args ?? [])],
+    sql: `UPDATE cells SET ${sets.join(", ")}, updated_at = ? WHERE id = ?`,
+    args: [...args, now(), before.id],
   };
 }
 
@@ -84,7 +86,7 @@ export async function updateCell(userId: string, id: string, patch: CellPatch): 
   return getCell(userId, id);
 }
 
-/** Several cell changes in one transaction (leverage ratings, weekly picks, accepted suggestions). */
+/** Several cell changes in one transaction (leverage ratings, weekly picks). */
 export async function updateCells(userId: string, updates: { id: string; patch: CellPatch }[]): Promise<Cell[]> {
   if (!updates.length) return [];
   const db = await getDb();

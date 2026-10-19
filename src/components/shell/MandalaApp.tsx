@@ -1,11 +1,11 @@
 "use client";
 
-import { Mic, Sun, LayoutGrid } from "lucide-react";
+import { PenLine, Sun, LayoutGrid } from "lucide-react";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { GoalView } from "@/components/goal/GoalView";
 import { LeverageView } from "@/components/lever/LeverageView";
 import { NewGoalFlow } from "@/components/new/NewGoalFlow";
-import { Recorder } from "@/components/report/Recorder";
+import { ReportSheet } from "@/components/report/ReportSheet";
 import { ReportsView } from "@/components/report/ReportsView";
 import { TodayView } from "@/components/today/TodayView";
 import { AsciiSpinner } from "@/components/ascii/AsciiSpinner";
@@ -14,7 +14,7 @@ import { cn } from "@/components/ui/cn";
 import { useIsDesktop } from "@/components/ui/hooks";
 import { Toaster } from "@/components/ui/Toaster";
 import { navigate, useView, viewGoalId, type View } from "@/client/nav";
-import { closeRecorder, openRecorder, useRecorderRequest } from "@/client/recorder";
+import { closeReport, openReport, useReportRequest } from "@/client/report-sheet";
 import { actions, startStore, useAppState } from "@/client/store";
 import { ShellContext } from "./ShellContext";
 import { Sidebar } from "./Sidebar";
@@ -42,17 +42,17 @@ function App() {
   const view = useView();
   const isDesktop = useIsDesktop();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const recorder = useRecorderRequest();
+  const report = useReportRequest();
 
   useEffect(() => {
     startStore();
-    // Home-screen shortcut and deep link: /?report=1 opens the recorder straight away.
+    // Home-screen shortcut and deep link: /?report=1 opens the report sheet straight away.
     const params = new URLSearchParams(window.location.search);
     if (params.has("report")) {
       params.delete("report");
       const query = params.toString();
       window.history.replaceState(window.history.state, "", query ? `/?${query}` : "/");
-      openRecorder(null);
+      openReport(null);
     }
   }, []);
 
@@ -63,7 +63,7 @@ function App() {
       if (target?.closest("input, textarea, select, [contenteditable=true], [role=dialog]")) return;
       if (event.key === "r" || event.key === "R") {
         event.preventDefault();
-        openRecorder(viewGoalId(view));
+        openReport(viewGoalId(view));
       } else if (event.key === "n" || event.key === "N") {
         event.preventDefault();
         navigate({ name: "new" });
@@ -91,7 +91,7 @@ function App() {
         </main>
 
         {!isDesktop && !fullScreen && <BottomBar view={view} onGoals={() => setDrawerOpen(true)} />}
-        <Recorder open={recorder.open} goalId={recorder.goalId} typed={recorder.typed} onClose={closeRecorder} />
+        <ReportSheet open={report.open} goalId={report.goalId} onClose={closeReport} />
         <Toaster />
       </div>
     </ShellContext>
@@ -185,11 +185,11 @@ function BottomBar({ view, onGoals }: { view: View; onGoals: () => void }) {
         </TabButton>
         <button
           type="button"
-          aria-label={goalScope ? "Record a report for this goal" : "Record a report"}
-          onClick={() => openRecorder(goalScope)}
+          aria-label={goalScope ? "Write a report for this goal" : "Write a report"}
+          onClick={() => openReport(goalScope)}
           className="-mt-6 grid size-16 place-items-center rounded-full bg-fg text-white shadow-[0_6px_20px_rgba(0,0,0,0.18)] transition-transform active:scale-95"
         >
-          <Mic size={24} />
+          <PenLine size={22} />
         </button>
         <TabButton label="Goals" active={view.name === "goal" || view.name === "lever"} onClick={onGoals}>
           <LayoutGrid size={20} />

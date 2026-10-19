@@ -2,7 +2,7 @@ import "server-only";
 import type { InStatement, InValue, Row } from "@libsql/client";
 import { getDb } from "@/server/db";
 import { HttpError } from "@/domain/errors";
-import type { Cell, Checkin, EventType, Goal, ProgressEvent, Report, ReportSource } from "@/domain/types";
+import type { Cell, Checkin, EventType, Goal, ProgressEvent, Report } from "@/domain/types";
 
 // Helpers shared by the repo modules: row mapping, ownership guards and event logging.
 // Not exported from the repo's index: route handlers use the functions in the other files.
@@ -68,6 +68,8 @@ export function toCell(row: Row): Cell {
     text: String(row.text),
     notes: String(row.notes),
     kind: String(row.kind) as Cell["kind"],
+    repeat: row.repeat === "week" || row.repeat === "month" ? row.repeat : "day",
+    repeatOn: row.repeat_on == null ? null : Number(row.repeat_on),
     status: String(row.status) as Cell["status"],
     progress: Number(row.progress),
     impact: row.impact == null ? null : Number(row.impact),
@@ -93,8 +95,7 @@ export function toReport(row: Row): Report {
   return {
     id: String(row.id),
     goalId: row.goal_id == null ? null : String(row.goal_id),
-    source: String(row.source) as ReportSource,
-    transcript: String(row.transcript),
+    text: String(row.transcript),
     summary: String(row.summary),
     day: String(row.day),
     createdAt: String(row.created_at),

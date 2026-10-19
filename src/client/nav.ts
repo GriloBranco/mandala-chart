@@ -87,7 +87,7 @@ export function useView(): View {
   return useSyncExternalStore(subscribe, snapshot, () => SERVER_VIEW);
 }
 
-/** The goal a report recorded from this view belongs to, or null for a general report. */
+/** The goal a report written from this view belongs to, or null for a general report. */
 export function viewGoalId(view: View): string | null {
   if (view.name === "goal" || view.name === "lever" || view.name === "reports") return view.goalId ?? null;
   return null;

@@ -9,6 +9,7 @@ import {
   todayItems,
   type TodayItem,
 } from "@/domain/mandala";
+import { routineToday } from "@/domain/repeat";
 import type { Checkin, GoalWithCells } from "@/domain/types";
 import { shortGoalTitle } from "@/components/report/format";
 
@@ -24,7 +25,10 @@ export interface IdleGoal {
 
 export interface TodayModel {
   activeGoals: GoalWithCells[];
+  /** Routines due today (or late), plus ones checked today. */
   habits: TodayItem[];
+  /** Weekly and monthly routines done for now, with the day each comes back. */
+  later: { item: TodayItem; next: string }[];
   /** Active tasks not done, plus ones just checked that are still fading out. */
   tasks: TodayItem[];
   doneToday: TodayItem[];
@@ -64,7 +68,14 @@ export function buildToday(
   fading: string[],
 ): TodayModel {
   const activeGoals = goals.filter((goal) => goal.status === "active");
-  const { habits } = todayItems(goals);
+  const habits: TodayItem[] = [];
+  const later: { item: TodayItem; next: string }[] = [];
+  for (const item of todayItems(goals).habits) {
+    const state = routineToday(item.cell, checkins, today);
+    if (state.show) habits.push(item);
+    else if (state.next) later.push({ item, next: state.next });
+  }
+  later.sort((a, b) => a.next.localeCompare(b.next));
   const tasks: TodayItem[] = [];
   const doneToday: TodayItem[] = [];
   for (const goal of activeGoals) {
@@ -82,6 +93,7 @@ export function buildToday(
 
   const open = new Set<string>();
   for (const item of habits) open.add(item.goal.id);
+  for (const { item } of later) open.add(item.goal.id);
   for (const item of tasks) if (item.cell.status !== "done") open.add(item.goal.id);
 
   const idle = activeGoals
@@ -96,6 +108,7 @@ export function buildToday(
   return {
     activeGoals,
     habits,
+    later,
     tasks,
     doneToday,
     checkedToday: new Set(checkins.filter((c) => c.day === today).map((c) => c.cellId)),

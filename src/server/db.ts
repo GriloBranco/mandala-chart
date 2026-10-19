@@ -106,14 +106,11 @@ const MIGRATIONS: string[][] = [
       PRIMARY KEY (cell_id, day)
     )`,
     `CREATE INDEX IF NOT EXISTS checkins_user ON checkins (user_id, day)`,
-    // AI calls per user per day, so a public deployment cannot run up the Gemini bill.
-    `CREATE TABLE IF NOT EXISTS ai_usage (
-      user_id TEXT NOT NULL,
-      day TEXT NOT NULL,
-      kind TEXT NOT NULL,
-      count INTEGER NOT NULL DEFAULT 0,
-      PRIMARY KEY (user_id, day, kind)
-    )`,
+  ],
+  // Habits that come back weekly or monthly. repeat_on is the weekday (0-6) or the date (1-31).
+  [
+    `ALTER TABLE cells ADD COLUMN repeat TEXT NOT NULL DEFAULT 'day'`,
+    `ALTER TABLE cells ADD COLUMN repeat_on INTEGER`,
   ],
 ];
 

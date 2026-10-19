@@ -2,7 +2,6 @@
 
 import { ArrowRight, ListPlus } from "lucide-react";
 import { useRef, useState } from "react";
-import { SuggestionTray } from "@/components/shared/SuggestionTray";
 import { GoalGlyph } from "@/components/shell/GoalGlyph";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
@@ -10,10 +9,10 @@ import { useMediaQuery } from "@/components/ui/hooks";
 import { isFilled, pillarCell } from "@/domain/mandala";
 import { actions, goalById } from "@/client/store";
 import { toast } from "@/client/toast";
-import type { GoalWithCells, Suggestion } from "@/domain/types";
+import type { GoalWithCells } from "@/domain/types";
 import { Composer } from "./Composer";
 import { FocusGrid } from "./FocusGrid";
-import { CLEAR_PATCH, emptyPillarSlots, filledActionCount, firstEmptyPillar, nextEmptyPillar, restorePatch } from "./slots";
+import { CLEAR_PATCH, filledActionCount, firstEmptyPillar, nextEmptyPillar, restorePatch } from "./slots";
 import { Dock, LABEL, NavRow, StepBody, StepHeading } from "./StepParts";
 import { dumpIdeas, pillarHints, readDump, writeDump } from "./text";
 import { useViewport } from "./viewport";
@@ -95,12 +94,12 @@ export function PillarsStep({
    * Places a pillar in the selected square if it is empty, else the next empty one. From the
    * brain dump, a full chart swaps the selected square and keeps the old name as an idea.
    */
-  const place = (idea: string, swap: boolean) => {
+  const place = (idea: string) => {
     const g = latest();
     const selected = pillarCell(g, slot);
     const target = !isFilled(selected) ? slot : nextEmptyPillar(g, slot);
     if (target === null) {
-      if (!swap || !selected) {
+      if (!selected) {
         toast("All 8 are named. Clear one to add another.");
         return;
       }
@@ -129,25 +128,6 @@ export function PillarsStep({
     if (!targetCell) return;
     actions.updateCell(targetCell.id, { text: idea });
     setSlot(nextEmptyPillar(latest(), target) ?? target);
-  };
-
-  const placeAll = (items: Suggestion[]) => {
-    const g = latest();
-    const updates = emptyPillarSlots(g, slot)
-      .slice(0, items.length)
-      .flatMap((p, i) => {
-        const target = pillarCell(g, p);
-        return target ? [{ id: target.id, patch: { text: items[i].text } }] : [];
-      });
-    if (!updates.length) {
-      toast("All 8 are named. Clear one to add another.");
-      return;
-    }
-    actions.updateCells(updates);
-    toast(`Added ${updates.length}`, {
-      action: { label: "Undo", run: () => actions.updateCells(updates.map((u) => ({ id: u.id, patch: { text: "" } }))) },
-    });
-    setSlot(firstEmptyPillar(latest()) ?? slot);
   };
 
   const hideDock = typing || (dumpFocused && keyboard);
@@ -222,7 +202,7 @@ export function PillarsStep({
                   ideas={ideas}
                   named={names.map((n) => (n ? 1 : null))}
                   onChange={changeDump}
-                  onPlace={(idea) => place(idea, true)}
+                  onPlace={place}
                   onFocus={() => setDumpFocused(true)}
                   onBlur={() => setDumpFocused(false)}
                 />
@@ -231,13 +211,6 @@ export function PillarsStep({
                   Brain dump
                 </Button>
               )}
-              <SuggestionTray
-                goalId={goal.id}
-                target="pillars"
-                existing={names}
-                onPick={(suggestion) => place(suggestion.text, false)}
-                onPickAll={placeAll}
-              />
             </div>
           )}
         </div>

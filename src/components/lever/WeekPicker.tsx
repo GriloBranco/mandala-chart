@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { GoalGlyph } from "@/components/shell/GoalGlyph";
 import { cn } from "@/components/ui/cn";
 import { actionCells, isFilled } from "@/domain/mandala";
+import { repeatLabel } from "@/domain/repeat";
 import type { Cell, GoalWithCells } from "@/domain/types";
 import { PickToggle } from "./parts";
 import { coverage, pickablePillars, pillarName } from "@/domain/week";
@@ -16,9 +17,7 @@ export function PickRow({
   goal,
   cell,
   picked,
-  suggested = false,
   onToggle,
-  reason,
   synergy,
   pillarTag = false,
   aside,
@@ -29,10 +28,7 @@ export function PickRow({
   goal: GoalWithCells;
   cell: Cell;
   picked: boolean;
-  suggested?: boolean;
   onToggle: (next: boolean) => void;
-  /** Why it is a good pick (from the AI). */
-  reason?: string | null;
   /** Other pillars it also helps, shown as "Also helps …". */
   synergy?: number[] | null;
   pillarTag?: boolean;
@@ -47,14 +43,13 @@ export function PickRow({
   const meta: string[] = [];
   if (pillarTag) meta.push(pillarName(goal, cell.pillar));
   if (done) meta.push("Done");
-  else if (cell.kind === "habit") meta.push("Habit");
+  else if (cell.kind === "habit") meta.push(repeatLabel(cell));
   if (synergy?.length) meta.push(`Also helps ${synergy.map((p) => pillarName(goal, p)).join(", ")}`);
 
   return (
     <li className={cn("grid grid-cols-[44px_minmax(0,1fr)] gap-x-2 py-1.5", className)}>
       <PickToggle
         picked={picked}
-        suggested={suggested}
         done={done}
         label={`This week: ${cell.text.trim()}`}
         onChange={onToggle}
@@ -73,7 +68,6 @@ export function PickRow({
             {metaExtra}
           </div>
         )}
-        {reason && <p className="mt-1.5 text-[13px] leading-snug text-muted">{reason}</p>}
       </div>
       {children && <div className="col-span-2 pb-2 sm:col-span-1 sm:col-start-2">{children}</div>}
     </li>
@@ -132,19 +126,12 @@ export function PickSummary({
 export function WeekPicker({
   goal,
   picked,
-  suggested,
   onToggle,
-  reasons,
-  synergy,
   className,
 }: {
   goal: GoalWithCells;
   picked: Set<string>;
-  suggested?: Set<string>;
   onToggle: (cell: Cell, next: boolean) => void;
-  /** Shown under picked or suggested rows only, to keep the list calm. */
-  reasons?: Map<string, string>;
-  synergy?: (cell: Cell) => number[];
   className?: string;
 }) {
   const groups = pickablePillars(goal).map((p) => ({ p, cells: actionCells(goal, p).filter(isFilled) }));
@@ -165,22 +152,16 @@ export function WeekPicker({
               {count > 0 && <span className="font-mono text-[11px] text-faint">{count} picked</span>}
             </div>
             <ul className="divide-y divide-line">
-              {cells.map((cell) => {
-                const on = picked.has(cell.id);
-                const hinted = on || Boolean(suggested?.has(cell.id));
-                return (
-                  <PickRow
-                    key={cell.id}
-                    goal={goal}
-                    cell={cell}
-                    picked={on}
-                    suggested={!on && Boolean(suggested?.has(cell.id))}
-                    onToggle={(next) => onToggle(cell, next)}
-                    reason={hinted ? reasons?.get(cell.id) : null}
-                    synergy={synergy ? synergy(cell) : cell.helps}
-                  />
-                );
-              })}
+              {cells.map((cell) => (
+                <PickRow
+                  key={cell.id}
+                  goal={goal}
+                  cell={cell}
+                  picked={picked.has(cell.id)}
+                  onToggle={(next) => onToggle(cell, next)}
+                  synergy={cell.helps}
+                />
+              ))}
             </ul>
           </section>
         );

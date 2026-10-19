@@ -15,6 +15,6 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
-    shortcuts: [{ name: "Voice report", short_name: "Report", url: "/?report=1" }],
+    shortcuts: [{ name: "Write a report", short_name: "Report", url: "/?report=1" }],
   };
 }

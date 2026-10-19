@@ -16,6 +16,8 @@ export function sampleGoal(): GoalWithCells {
         text: named,
         notes: "",
         kind: slot === 0 ? "habit" : "task",
+        repeat: "day",
+        repeatOn: null,
         status: "todo",
         progress: 0,
         impact: slot === 1 ? 3 : null,

@@ -1,13 +1,12 @@
 "use client";
 
 // Every change the chart makes goes through here. It remembers which squares were edited on
-// this screen, so the "updated from a report" flash only lights up changes that came from
-// elsewhere, and it gives check-offs and clears an Undo.
+// this screen, so the "updated elsewhere" flash only lights up changes that came from
+// another device, and it gives check-offs and clears an Undo.
 
-import { ApiError } from "@/client/api";
 import { actions, cellById } from "@/client/store";
 import { toast } from "@/client/toast";
-import type { Cell, CellKind, CellPatch, Suggestion } from "@/domain/types";
+import type { Cell, CellKind, CellPatch } from "@/domain/types";
 
 const touched = new Map<string, number>();
 
@@ -26,12 +25,6 @@ export function editCell(id: string, patch: CellPatch, options: { debounce?: boo
   actions.updateCell(id, patch, options);
 }
 
-export function editCells(updates: { id: string; patch: CellPatch }[]) {
-  if (!updates.length) return;
-  for (const update of updates) touch(update.id);
-  actions.updateCells(updates);
-}
-
 export function setCheckin(cellId: string, day: string, done: boolean) {
   touch(cellId);
   actions.toggleCheckin(cellId, day, done);
@@ -42,6 +35,8 @@ function snapshot(cell: Cell): CellPatch {
     text: cell.text,
     notes: cell.notes,
     kind: cell.kind,
+    repeat: cell.repeat,
+    repeatOn: cell.repeatOn,
     status: cell.status,
     progress: cell.progress,
     impact: cell.impact,
@@ -59,6 +54,8 @@ const CLEARED: CellPatch = {
   text: "",
   notes: "",
   kind: "task",
+  repeat: "day",
+  repeatOn: null,
   status: "todo",
   progress: 0,
   impact: null,
@@ -120,32 +117,4 @@ export function toggleWeek(cell: Cell, options: { quiet?: boolean } = {}) {
 export function setKind(cell: Cell, kind: CellKind) {
   if (cell.kind === kind) return;
   editCell(cell.id, kind === "habit" && cell.status === "doing" ? { kind, status: "todo" } : { kind });
-}
-
-export function suggestionPatch(suggestion: Suggestion): CellPatch {
-  const patch: CellPatch = { text: suggestion.text.trim().slice(0, 200) };
-  if (suggestion.kind) patch.kind = suggestion.kind;
-  return patch;
-}
-
-/**
- * Puts picked suggestions into empty squares, in the order given (clockwise).
- * Returns the ids it filled. Several at once get an Undo.
- */
-export function fillSquares(empty: Cell[], picks: Suggestion[], plural: string): string[] {
-  const count = Math.min(empty.length, picks.length);
-  if (!count) return [];
-  const targets = empty.slice(0, count);
-  const before = targets.map((cell) => ({ id: cell.id, patch: snapshot(cell) }));
-  editCells(targets.map((cell, i) => ({ id: cell.id, patch: suggestionPatch(picks[i]) })));
-  if (count > 1) {
-    toast(`Added ${count} ${plural}`, { action: { label: "Undo", run: () => editCells(before) } });
-  }
-  return targets.map((cell) => cell.id);
-}
-
-/** A short, plain message for a failed AI call. */
-export function aiErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError && error.offline) return "You're offline. Try again when you're back.";
-  return error instanceof Error && error.message ? error.message : fallback;
 }

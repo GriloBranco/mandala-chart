@@ -1,11 +1,11 @@
 "use client";
 
-// Report data shared by the Today card, the Reports list and the recorder.
+// Report data shared by the Today card, the Reports list and the report sheet.
 // Lists are cached in memory, so going back to Reports paints at once and refreshes quietly.
 
 import { useSyncExternalStore } from "react";
 import { api } from "@/client/api";
-import type { Report, ReportWithEvents } from "@/domain/types";
+import type { Report } from "@/domain/types";
 
 /** Fired on window after a report is saved. Lists and the Today card refetch on it. */
 export const REPORT_SAVED_EVENT = "mandala:report-saved";
@@ -31,7 +31,7 @@ function setLatest(next: LatestReport) {
 function loadLatest() {
   const run = ++latestRun;
   api
-    .get<ReportWithEvents[]>("/api/reports?limit=1")
+    .get<Report[]>("/api/reports?limit=1")
     .then((list) => {
       // A newer load or a save happened meanwhile: its answer wins.
       if (run === latestRun) setLatest({ report: list[0] ?? null, loaded: true });
@@ -73,35 +73,20 @@ export function announceReportSaved(report: Report) {
 
 // ---------- report lists ----------
 
-const lists = new Map<string, ReportWithEvents[]>();
+const lists = new Map<string, Report[]>();
 
-export function cachedReports(goalId: string | undefined): ReportWithEvents[] | null {
+export function cachedReports(goalId: string | undefined): Report[] | null {
   return lists.get(goalId ?? "") ?? null;
 }
 
-export async function fetchReports(goalId: string | undefined): Promise<ReportWithEvents[]> {
-  let reports: ReportWithEvents[];
-  if (goalId) {
-    // A general report (no goal picked) can still change this goal's squares, so include those too.
-    const [own, recent] = await Promise.all([
-      api.get<ReportWithEvents[]>(`/api/reports?limit=100&goalId=${encodeURIComponent(goalId)}`),
-      api.get<ReportWithEvents[]>("/api/reports?limit=100"),
-    ]);
-    const byId = new Map(own.map((report) => [report.id, report]));
-    for (const report of recent) {
-      if (!byId.has(report.id) && report.events.some((event) => event.goalId === goalId)) {
-        byId.set(report.id, report);
-      }
-    }
-    reports = [...byId.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  } else {
-    reports = await api.get<ReportWithEvents[]>("/api/reports?limit=100");
-  }
+export async function fetchReports(goalId: string | undefined): Promise<Report[]> {
+  const query = goalId ? `limit=100&goalId=${encodeURIComponent(goalId)}` : "limit=100";
+  const reports = await api.get<Report[]>(`/api/reports?${query}`);
   lists.set(goalId ?? "", reports);
   return reports;
 }
 
-/** Deletes the report only. The chart changes it made stay. */
+/** Deletes the report. */
 export async function deleteReport(id: string): Promise<void> {
   await api.delete(`/api/reports/${encodeURIComponent(id)}`);
   for (const [key, list] of lists) lists.set(key, list.filter((report) => report.id !== id));

@@ -91,8 +91,8 @@ export function Composer({
         </IconButton>
       </div>
       {(hint || extra) && (
-        <div className="mt-1.5 flex min-h-8 items-center gap-2 pr-1 pl-4">
-          <div className="min-w-0 flex-1 text-[12.5px] leading-snug text-muted" aria-live="polite">
+        <div className="mt-1.5 flex min-h-8 flex-wrap items-center gap-x-2 gap-y-1.5 pr-1 pl-4">
+          <div className="min-w-[12rem] flex-1 text-[12.5px] leading-snug text-muted" aria-live="polite">
             {hint}
           </div>
           {extra}

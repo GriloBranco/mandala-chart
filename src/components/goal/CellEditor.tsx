@@ -4,19 +4,19 @@ import { Eraser } from "lucide-react";
 import { useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from "react";
 import { actionHints, dayKey, EFFORT_LABELS, goalHints, IMPACT_LABELS, isFilled, NOTES_MAX, pillarProgress } from "@/domain/mandala";
 import { actions as store, useAppState } from "@/client/store";
-import type { Cell, CellKind, CellPatch, CellStatus, Checkin, GoalWithCells, Suggestion } from "@/domain/types";
+import type { Cell, CellPatch, CellStatus, Checkin, GoalWithCells } from "@/domain/types";
 import { PillarChips } from "@/components/shared/PillarChips";
-import { SuggestionTray } from "@/components/shared/SuggestionTray";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
-import { clearSquare, editCell, fillSquares, hasContent, setKind, suggestionPatch } from "./edits";
+import { clearSquare, editCell, hasContent } from "./edits";
+import { HowOftenPicker, RepeatDayPicker } from "@/components/shared/HowOften";
+import { guessHowOften, howOftenPatch } from "@/domain/repeat";
 import { HabitDays } from "./HabitDays";
 import { looksLikeHabit, pillarHints, type ChartIndex } from "./model";
 import { Field, Row, SwitchKnob } from "./parts";
-import { SharpenButton, SharpenPanel, useSharpen } from "./Sharpen";
 
 export type EditorTarget = { role: "goal" } | { role: "pillar"; cell: Cell } | { role: "action"; cell: Cell };
 
@@ -25,11 +25,6 @@ const PLACEHOLDER = {
   pillar: "A key driver, e.g. Sleep",
   action: "Something you can tick off, e.g. Run 3x a week",
 };
-
-const KIND_OPTIONS: SegmentedOption<CellKind>[] = [
-  { value: "task", label: "Task" },
-  { value: "habit", label: "Habit" },
-];
 
 const STATUS_OPTIONS: SegmentedOption<CellStatus>[] = [
   { value: "todo", label: "To do" },
@@ -64,7 +59,6 @@ export function CellEditor({
   onEscape,
   onTypingChange,
   onOpenPillar,
-  onFilled,
   className,
 }: {
   goal: GoalWithCells;
@@ -77,23 +71,21 @@ export function CellEditor({
   autoFocus?: boolean;
   textRef?: Ref<HTMLTextAreaElement | null>;
   /**
-   * After a Sharpen pick or "Make it one", put the cursor back in the text: the clicked button
+   * After "Make it one", put the cursor back in the text: the clicked button
    * goes away, so focus would drop to the page. Desktop only; on a phone it would bring the
    * keyboard back up.
    */
   refocusText?: boolean;
-  /** Enter in the text field, or a suggestion put into this square: go to the next empty square. */
-  onAdvance: (via: "enter" | "pick") => void;
+  /** Enter in the text field: go to the next empty square. */
+  onAdvance: () => void;
   /** Esc in the text field. Without it, Esc is left to the sheet (which closes). */
   onEscape?: () => void;
   onTypingChange?: (typing: boolean) => void;
   /** Go to a pillar, e.g. to name it before writing its actions. */
   onOpenPillar?: (pillar: number) => void;
-  /** Squares just filled from suggestions. */
-  onFilled?: (ids: string[]) => void;
   className?: string;
 }) {
-  const { checkins, aiEnabled } = useAppState();
+  const { checkins } = useAppState();
   const today = dayKey();
   const cell = target.role === "goal" ? null : target.cell;
   const squareKey = cell ? cell.id : `goal:${goal.id}`;
@@ -113,9 +105,6 @@ export function CellEditor({
 
   // A square that starts empty follows its wording: "every day" makes it a habit, until you pick.
   const [guessKindFor, setGuessKindFor] = useState<string | null>(null);
-
-  const sharpen = useSharpen(squareKey);
-  const pillarIndex = cell ? cell.pillar : undefined;
 
   // Our own handle on the text field; the caller's textRef gets the same element.
   const fieldRef = useRef<HTMLTextAreaElement | null>(null);
@@ -148,11 +137,8 @@ export function CellEditor({
       const fresh = !cell.text.trim() && Boolean(value.trim());
       if (fresh && guessKindFor !== cell.id) setGuessKindFor(cell.id);
       if (fresh || guessKindFor === cell.id) {
-        const kind: CellKind = looksLikeHabit(value) ? "habit" : "task";
-        if (kind !== cell.kind) {
-          patch.kind = kind;
-          if (kind === "habit" && cell.status === "doing") patch.status = "todo";
-        }
+        const guess = guessHowOften(value);
+        Object.assign(patch, howOftenPatch(cell, guess.choice, dayKey(), guess.on));
       }
     }
     editCell(cell.id, patch, { debounce: true });
@@ -163,33 +149,12 @@ export function CellEditor({
       if (event.nativeEvent.isComposing) return;
       event.preventDefault();
       if (!text.trim() && !cell) return;
-      onAdvance("enter");
+      onAdvance();
     } else if (event.key === "Escape" && onEscape) {
       event.preventDefault();
       event.stopPropagation();
       onEscape();
     }
-  }
-
-  function replaceText(option: string) {
-    const value = option.trim().slice(0, 200);
-    if (!value) return;
-    if (cell) editCell(cell.id, { text: value });
-    else store.updateGoal(goal.id, { title: value });
-    sharpen.reset();
-    backToText();
-  }
-
-  function runSharpen() {
-    if (!text.trim()) return;
-    void sharpen.run({ goalId: goal.id, role: target.role, text: text.trim(), pillar: pillarIndex });
-  }
-
-  function pickHere(suggestion: Suggestion) {
-    if (!cell) return;
-    editCell(cell.id, suggestionPatch(suggestion));
-    onFilled?.([cell.id]);
-    onAdvance("pick");
   }
 
   const hints = !quiet
@@ -233,7 +198,7 @@ export function CellEditor({
           className={cn(TEXT_FIELD, target.role !== "action" && "font-semibold tracking-tight")}
         />
 
-        {(hints.length > 0 || habitNudge || unnamedPillar || (aiEnabled && text.trim())) && (
+        {(hints.length > 0 || habitNudge || unnamedPillar) && (
           <div className="mt-2 flex items-start gap-3">
             <div className="min-w-0 flex-1 space-y-1 pt-1.5">
               {unnamedPillar && (
@@ -262,7 +227,9 @@ export function CellEditor({
                     type="button"
                     className="font-medium text-fg underline underline-offset-2"
                     onClick={() => {
-                      setKind(target.cell, "habit");
+                      const guess = guessHowOften(text);
+                      const choice = guess.choice === "task" ? "day" : guess.choice;
+                      editCell(target.cell.id, howOftenPatch(target.cell, choice, dayKey(), guess.on));
                       backToText();
                     }}
                   >
@@ -271,19 +238,13 @@ export function CellEditor({
                 </p>
               )}
             </div>
-            {aiEnabled && text.trim() && <SharpenButton state={sharpen.state} onRun={runSharpen} />}
           </div>
-        )}
-        {aiEnabled && (
-          <SharpenPanel state={sharpen.state} onPick={replaceText} onRetry={runSharpen} onClose={sharpen.reset} />
         )}
       </div>
 
-      {!compact && target.role === "goal" && <GoalDetails goal={goal} index={index} onFilled={onFilled} />}
+      {!compact && target.role === "goal" && <GoalDetails goal={goal} />}
 
-      {!compact && target.role !== "goal" && !isFilled(target.cell) && (
-        <EmptyGuide goal={goal} index={index} target={target} onPick={pickHere} onFilled={onFilled} />
-      )}
+      {!compact && target.role !== "goal" && !isFilled(target.cell) && <EmptyGuide target={target} />}
 
       {!compact && target.role === "pillar" && isFilled(target.cell) && (
         <PillarDetails
@@ -292,7 +253,6 @@ export function CellEditor({
           cell={target.cell}
           checkins={checkins}
           today={today}
-          onFilled={onFilled}
         />
       )}
 
@@ -336,18 +296,7 @@ const QUICK_DEADLINES = [
   { label: "1 year", months: 12 },
 ];
 
-function GoalDetails({
-  goal,
-  index,
-  onFilled,
-}: {
-  goal: GoalWithCells;
-  index: ChartIndex;
-  onFilled?: (ids: string[]) => void;
-}) {
-  const emptyPillars = index.pillars.filter((c): c is Cell => Boolean(c) && !isFilled(c));
-  const named = index.pillars.filter((c) => isFilled(c)).map((c) => c?.text ?? "");
-
+function GoalDetails({ goal }: { goal: GoalWithCells }) {
   return (
     <>
       <Field label="DEADLINE">
@@ -391,18 +340,6 @@ function GoalDetails({
           className={LONG_FIELD}
         />
       </Field>
-
-      {emptyPillars.length > 0 && (
-        <Field label="PILLARS" aside={`${8 - emptyPillars.length} of 8 named`}>
-          <SuggestionTray
-            goalId={goal.id}
-            target="pillars"
-            existing={named}
-            onPick={(suggestion) => onFilled?.(fillSquares(emptyPillars, [suggestion], "pillars"))}
-            onPickAll={(list) => onFilled?.(fillSquares(emptyPillars, list, "pillars"))}
-          />
-        </Field>
-      )}
     </>
   );
 }
@@ -415,18 +352,14 @@ function PillarDetails({
   cell,
   checkins,
   today,
-  onFilled,
 }: {
   goal: GoalWithCells;
   index: ChartIndex;
   cell: Cell;
   checkins: Checkin[];
   today: string;
-  onFilled?: (ids: string[]) => void;
 }) {
-  const own = index.actions[cell.pillar];
-  const filled = own.filter((c) => isFilled(c)).length;
-  const empty = own.filter((c): c is Cell => Boolean(c) && !isFilled(c));
+  const filled = index.actions[cell.pillar].filter((c) => isFilled(c)).length;
   const progress = pillarProgress(goal, cell.pillar, checkins, today);
 
   return (
@@ -458,18 +391,6 @@ function PillarDetails({
             <span>{Math.round(progress * 100)}%</span>
           </div>
         </div>
-        {empty.length > 0 && (
-          <SuggestionTray
-            key={`actions-${cell.pillar}`}
-            goalId={goal.id}
-            target="actions"
-            pillar={cell.pillar}
-            existing={actionTexts(goal)}
-            onPick={(suggestion) => onFilled?.(fillSquares(empty, [suggestion], "actions"))}
-            onPickAll={(list) => onFilled?.(fillSquares(empty, list, "actions"))}
-            className="mt-2"
-          />
-        )}
       </Field>
 
       <NotesField cell={cell} />
@@ -494,17 +415,24 @@ function ActionDetails({
 }) {
   return (
     <>
-      <Field label="KIND">
-        <Segmented
-          value={cell.kind}
-          options={KIND_OPTIONS}
-          onChange={(kind) => {
-            if (!kind) return;
-            onKindPicked();
-            setKind(cell, kind);
-          }}
-          label="Kind"
-        />
+      <Field label="HOW OFTEN">
+        <div className="space-y-2">
+          <HowOftenPicker
+            cell={cell}
+            onPick={(choice) => {
+              onKindPicked();
+              editCell(cell.id, howOftenPatch(cell, choice, today));
+            }}
+          />
+          <RepeatDayPicker
+            cell={cell}
+            onPick={(on) => {
+              onKindPicked();
+              editCell(cell.id, { repeatOn: on });
+            }}
+            className="flex"
+          />
+        </div>
       </Field>
 
       {cell.kind === "task" ? (
@@ -593,52 +521,13 @@ function NotesField({ cell }: { cell: Cell }) {
   );
 }
 
-function actionTexts(goal: GoalWithCells): string[] {
-  return goal.cells.filter((c) => c.slot >= 0 && isFilled(c)).map((c) => c.text);
-}
-
-/** An empty pillar or action: what makes a good one, and suggestions that drop straight in. */
-function EmptyGuide({
-  goal,
-  index,
-  target,
-  onPick,
-  onFilled,
-}: {
-  goal: GoalWithCells;
-  index: ChartIndex;
-  target: Extract<EditorTarget, { cell: Cell }>;
-  onPick: (suggestion: Suggestion) => void;
-  onFilled?: (ids: string[]) => void;
-}) {
-  const isPillar = target.role === "pillar";
-  const pillar = target.cell.pillar;
-  const named = isFilled(index.pillars[pillar]);
-  // Add all fills the block's empty squares clockwise, starting with this one.
-  const ring = isPillar ? index.pillars : index.actions[pillar];
-  const start = isPillar ? pillar : target.cell.slot;
-  const empty = Array.from({ length: 8 }, (_, step) => ring[(start + step) % 8]).filter(
-    (c): c is Cell => Boolean(c) && !isFilled(c),
-  );
-
+/** An empty pillar or action: what makes a good one. */
+function EmptyGuide({ target }: { target: Extract<EditorTarget, { cell: Cell }> }) {
   return (
-    <div className="space-y-3">
-      <p className="text-[13px] leading-relaxed text-muted">
-        {isPillar
-          ? "A pillar is a key driver of the goal, in 1-3 words. Keep the 8 distinct, and cover mind, skill, body and daily life."
-          : "Make it something you can tick off and that is in your control: an input, not an outcome."}
-      </p>
-      {(isPillar || named) && (
-        <SuggestionTray
-          key={isPillar ? "pillars" : `actions-${pillar}`}
-          goalId={goal.id}
-          target={isPillar ? "pillars" : "actions"}
-          pillar={isPillar ? undefined : pillar}
-          existing={isPillar ? index.pillars.filter((c) => isFilled(c)).map((c) => c?.text ?? "") : actionTexts(goal)}
-          onPick={onPick}
-          onPickAll={(list) => onFilled?.(fillSquares(empty, list, isPillar ? "pillars" : "actions"))}
-        />
-      )}
-    </div>
+    <p className="text-[13px] leading-relaxed text-muted">
+      {target.role === "pillar"
+        ? "A pillar is a key driver of the goal, in 1-3 words. Keep the 8 distinct, and cover mind, skill, body and daily life."
+        : "Make it something you can tick off and that is in your control: an input, not an outcome."}
+    </p>
   );
 }

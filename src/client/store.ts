@@ -16,9 +16,7 @@ import type {
   Checkin,
   GoalPatch,
   GoalWithCells,
-  ProposedUpdate,
   Report,
-  ReportSource,
 } from "@/domain/types";
 
 export interface StoreState {
@@ -27,7 +25,6 @@ export interface StoreState {
   user: Account | null;
   goals: GoalWithCells[];
   checkins: Checkin[];
-  aiEnabled: boolean;
   /** Local changes not yet saved on the server. */
   unsynced: number;
   offline: boolean;
@@ -68,7 +65,6 @@ const INITIAL: StoreState = {
   user: null,
   goals: [],
   checkins: [],
-  aiEnabled: false,
   unsynced: 0,
   offline: false,
   error: null,
@@ -127,7 +123,7 @@ function persistState() {
   // Only while the browser is still signed in as this account, so a page left open never
   // writes it back after a sign-out, or next to someone else's.
   if (!key || closed || !signedInHere() || state.user?.id !== owner) return;
-  writeJson(key, { user: state.user, goals: state.goals, checkins: state.checkins, aiEnabled: state.aiEnabled });
+  writeJson(key, { user: state.user, goals: state.goals, checkins: state.checkins });
 }
 
 function persistQueue() {
@@ -348,9 +344,9 @@ async function sendQueued(keepalive: boolean): Promise<void> {
 
 /**
  * Sends pending edits now and waits for them (a few rounds at most), so a server call that
- * reads the chart (AI, reports) sees what is on screen. False when offline or still unsent.
+ * reads the chart sees what is on screen. False when offline or still unsent.
  */
-export async function synced(): Promise<boolean> {
+async function synced(): Promise<boolean> {
   if (flushTimer) {
     clearTimeout(flushTimer);
     flushTimer = undefined;
@@ -541,43 +537,17 @@ export const actions = {
     }
   },
 
-  /** Shows the confirmed updates at once, saves the report, then reloads from the server. */
+  /** Saves a report, after any edits still waiting to sync (its goal may be brand new). */
   async saveReport(input: {
     /** Kept for retries, so a lost response cannot save the report twice. */
     id?: string;
     goalId: string | null;
-    source: ReportSource;
-    transcript: string;
+    text: string;
     summary: string;
     day: string;
-    updates: ProposedUpdate[];
   }): Promise<Report> {
-    const time = nowIso();
-    const before = { goals: state.goals, checkins: state.checkins };
-    let goals = state.goals;
-    let checkins = state.checkins;
-    for (const update of input.updates) {
-      if (update.status) goals = replaceCell(goals, update.cellId, (c) => applyPatch(c, { status: update.status }, time));
-      if (update.checkin) {
-        const goal = goals.find((g) => g.cells.some((c) => c.id === update.cellId));
-        if (goal && !checkins.some((c) => c.cellId === update.cellId && c.day === input.day)) {
-          checkins = [...checkins, { cellId: update.cellId, goalId: goal.id, day: input.day }];
-        }
-      }
-    }
-    emit({ goals, checkins });
-    await synced(); // earlier edits first, so the server applies the report on top of them
-    let report: Report;
-    try {
-      report = await api.post<Report>("/api/reports", input);
-    } catch (error) {
-      // Nothing was saved: stop showing the report's changes (unless newer edits came in since).
-      if (state.goals === goals && state.checkins === checkins) emit(before);
-      else void refresh();
-      throw error;
-    }
-    void refresh();
-    return report;
+    await synced();
+    return api.post<Report>("/api/reports", input);
   },
 
   /** The line at the top of Today. Shows at once; saved straight away (not queued). */
@@ -623,7 +593,7 @@ async function refresh(): Promise<void> {
   const ticket = ++refreshTicket;
   const seq = confirmedSeq;
   try {
-    const since = addDays(dayKey(), -60);
+    const since = addDays(dayKey(), -200);
     const server = await api.get<AppState>(`/api/state?since=${since}`);
     if (ticket !== refreshTicket || closed) return; // a newer refresh is on its way, or the page closed
     if (!owner) pin(server.user.id, false);
@@ -637,7 +607,7 @@ async function refresh(): Promise<void> {
     confirmed = confirmed.filter((c) => c.seq > seq);
     const merged = rebase(server, [...late, ...localOps()]);
     pruneQueue(merged.goals);
-    emit({ ...merged, user: server.user, aiEnabled: server.aiEnabled, status: "ready", offline: false });
+    emit({ ...merged, user: server.user, status: "ready", offline: false });
     persistState();
   } catch (error) {
     if (ticket !== refreshTicket || closed) return;
@@ -666,7 +636,7 @@ export function startStore() {
   if (account) pin(account, true);
   const stateKey = storageKey("state");
   const queueKey = storageKey("queue");
-  const saved = stateKey ? readJson<Pick<AppState, "user" | "goals" | "checkins" | "aiEnabled">>(stateKey) : null;
+  const saved = stateKey ? readJson<Pick<AppState, "user" | "goals" | "checkins">>(stateKey) : null;
   // A copy for another account (or an old one without an owner) is never shown.
   const cached = saved && saved.user?.id === owner ? saved : null;
   // The saved list can hold an op that was being sent and a newer one for the same square:
@@ -686,7 +656,6 @@ export function startStore() {
     emit({
       ...rebase(cached, localOps()),
       user: cached.user,
-      aiEnabled: cached.aiEnabled,
       status: "ready",
       unsynced: queue.size,
     });

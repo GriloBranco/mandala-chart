@@ -7,7 +7,8 @@ import { CheckCircle } from "@/components/ui/CheckCircle";
 import { cn } from "@/components/ui/cn";
 import { Sheet } from "@/components/ui/Sheet";
 import { useLongPress } from "@/components/ui/useLongPress";
-import { addDays, habitStrength, strengthGlyph, type TodayItem } from "@/domain/mandala";
+import { addDays, routineStrength, strengthGlyph, type TodayItem } from "@/domain/mandala";
+import { nextPeriodStart, recentPeriods, repeatOf } from "@/domain/repeat";
 import type { Checkin } from "@/domain/types";
 
 export interface MenuItem {
@@ -174,35 +175,44 @@ export function HabitRow({
   onLongPress?: () => void;
 }) {
   const { cell } = item;
-  const days = lastDays(today, 7);
-  const doneDays = new Set(checkins.filter((c) => c.cellId === cell.id).map((c) => c.day));
-  const count = days.filter((day) => doneDays.has(day)).length;
-  const strength = habitStrength(cell.id, checkins, today);
+  const schedule = repeatOf(cell);
+  const daily = schedule.repeat === "day";
+  // One dot per day for a daily routine, per week or month for the others.
+  const periods = daily ? lastDays(today, 7) : recentPeriods(cell, today, 7);
+  const doneDays = checkins.filter((c) => c.cellId === cell.id).map((c) => c.day);
+  const hit = (start: string) => {
+    const end = daily ? addDays(start, 1) : nextPeriodStart(schedule, start);
+    return doneDays.some((day) => day >= start && day < end);
+  };
+  const count = periods.filter(hit).length;
+  const unit = daily ? "days" : schedule.repeat === "week" ? "weeks" : "months";
+  const strength = routineStrength(cell, checkins, today);
+  const current = periods[periods.length - 1];
 
   return (
     <li className="group flex items-center gap-1">
       <CheckCircle checked={done} onChange={onToggle} label={`${cell.text}: done today`} className="-ml-2.5" />
       <RowBody text={cell.text} context={context} done={done} onOpen={onOpen} onLongPress={onLongPress} />
-      <span className="flex shrink-0 items-center gap-2 pl-2" title={`${count} of the last 7 days`}>
+      <span className="flex shrink-0 items-center gap-2 pl-2" title={`${count} of the last 7 ${unit}`}>
         <span className="font-mono text-[12px] leading-none text-faint" aria-hidden>
           {strengthGlyph(strength)}
         </span>
         <span className="flex gap-[3px]" aria-hidden>
-          {days.map((day) => (
+          {periods.map((day) => (
             <span
               key={day}
               className={cn(
                 "size-[7px] rounded-[2px]",
-                doneDays.has(day)
+                hit(day)
                   ? "bg-fg"
-                  : day === today
+                  : day === current
                     ? "shadow-[inset_0_0_0_1px_var(--line-strong)]"
                     : "bg-line",
               )}
             />
           ))}
         </span>
-        <span className="sr-only">{`${count} of the last 7 days`}</span>
+        <span className="sr-only">{`${count} of the last 7 ${unit}`}</span>
       </span>
       {menu}
     </li>

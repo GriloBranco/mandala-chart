@@ -43,7 +43,7 @@ export function Square({
   lever?: boolean;
   /** Done: quieter text. */
   muted?: boolean;
-  /** Brief highlight after an update (e.g. applied from a report). */
+  /** Brief highlight after an update (e.g. synced from another device). */
   flash?: boolean;
   /** Not the current focus (e.g. while a different block is being edited). */
   dim?: boolean;
