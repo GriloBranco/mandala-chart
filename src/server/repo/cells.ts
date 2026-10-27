@@ -5,8 +5,15 @@ import { HttpError } from "@/domain/errors";
 import { applyPatch, normalizePatch } from "@/domain/mandala";
 import type { Cell, CellPatch, EventType } from "@/domain/types";
 import { eventStatement, now, placeholders, stillOwned, toCell, USER_CELLS } from "./shared";
+import { cellOutboxStatement, checkinOutboxStatement } from "./todoist";
 
-// Squares: edits one at a time or in a batch, and daily check-ins of habits.
+// Squares: edits one at a time or in a batch, and daily check-ins of habits. Each write also
+// queues the change for Todoist in the same transaction, unless it came from Todoist.
+
+/** A change that came from Todoist is not sent back there. */
+interface WriteOptions {
+  fromTodoist?: boolean;
+}
 
 export async function getCell(userId: string, id: string): Promise<Cell> {
   const db = await getDb();
@@ -73,7 +80,12 @@ function cellUpdateStatement(before: Cell, patch: CellPatch): InStatement | null
   };
 }
 
-export async function updateCell(userId: string, id: string, patch: CellPatch): Promise<Cell> {
+export async function updateCell(
+  userId: string,
+  id: string,
+  patch: CellPatch,
+  options: WriteOptions = {},
+): Promise<Cell> {
   const db = await getDb();
   const before = await getCell(userId, id);
   const normalized = normalizePatch(before, patch);
@@ -82,6 +94,7 @@ export async function updateCell(userId: string, id: string, patch: CellPatch): 
   const statements: InStatement[] = [update];
   const change = describeChange(before, normalized);
   if (change) statements.push(eventStatement(userId, { goalId: before.goalId, cellId: id, reportId: null, ...change }));
+  if (!options.fromTodoist) statements.push(cellOutboxStatement(userId, id));
   await db.batch(statements, "write");
   return getCell(userId, id);
 }
@@ -93,6 +106,7 @@ export async function updateCells(userId: string, updates: { id: string; patch: 
   const ids = [...new Set(updates.map((u) => u.id))];
   const cells = await getCells(userId, ids);
   const statements: InStatement[] = [];
+  const changed = new Set<string>();
   for (const { id, patch } of updates) {
     const before = cells.get(id);
     // Deleted meanwhile, or not this user's: skip it so the rest still saves.
@@ -101,17 +115,27 @@ export async function updateCells(userId: string, updates: { id: string; patch: 
     const statement = cellUpdateStatement(before, normalized);
     if (!statement) continue;
     statements.push(statement);
+    changed.add(id);
     cells.set(id, applyPatch(before, normalized, now()));
     const change = describeChange(before, normalized);
     if (change) statements.push(eventStatement(userId, { goalId: before.goalId, cellId: id, reportId: null, ...change }));
   }
+  // One per changed square, after all the changes, so each sees its square as it ends up.
+  for (const id of changed) statements.push(cellOutboxStatement(userId, id));
   if (statements.length) await db.batch(statements, "write");
   return [...(await getCells(userId, ids)).values()];
 }
 
-export async function setCheckin(userId: string, cellId: string, day: string, done: boolean): Promise<void> {
+export async function setCheckin(
+  userId: string,
+  cellId: string,
+  day: string,
+  done: boolean,
+  options: WriteOptions = {},
+): Promise<void> {
   const db = await getDb();
   const cell = await getCell(userId, cellId);
+  const outbox = options.fromTodoist ? [] : [checkinOutboxStatement(userId, cellId, day, done)];
   if (done) {
     // A retried request must not log the check-in twice.
     const exists = await db.execute({
@@ -132,13 +156,14 @@ export async function setCheckin(userId: string, cellId: string, day: string, do
           { goalId: cell.goalId, cellId, reportId: null, type: "checkin", detail: `${cell.text || "Habit"}: checked ${day}` },
           `checkin:${cellId}:${day}`,
         ),
+        ...outbox,
       ],
       "write",
     );
   } else {
-    await db.execute({
-      sql: "DELETE FROM checkins WHERE cell_id = ? AND day = ? AND user_id = ?",
-      args: [cellId, day, userId],
-    });
+    await db.batch(
+      [{ sql: "DELETE FROM checkins WHERE cell_id = ? AND day = ? AND user_id = ?", args: [cellId, day, userId] }, ...outbox],
+      "write",
+    );
   }
 }

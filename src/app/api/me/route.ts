@@ -3,6 +3,7 @@ import { readJson, route, tooMany } from "@/server/http";
 import { verifyPassword } from "@/server/passwords";
 import { clearSessionCookies } from "@/server/session";
 import { clearTries, countTry } from "@/server/throttle";
+import { revokeTodoist } from "@/server/todoist";
 import { deleteUser, getPasswordHash, updateHeadline } from "@/server/users";
 import { accountPatchSchema, deleteAccountSchema } from "@/domain/validators";
 
@@ -31,6 +32,8 @@ export const DELETE = route(async (request, _context, user) => {
     return NextResponse.json({ error: "Wrong password." }, { status: 403 });
   }
   await clearTries("reauth", request, user.id);
+  // Best effort: revoke the Todoist token while it is still stored here.
+  await revokeTodoist(user.id);
   await deleteUser(user.id);
   const response = NextResponse.json({ ok: true });
   clearSessionCookies(response);

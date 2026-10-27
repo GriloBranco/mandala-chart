@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronDown, Download, KeyRound, LogOut, MonitorSmartphone, Trash2 } from "lucide-react";
-import { useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
+import { ChevronDown, Download, KeyRound, ListChecks, LogOut, MonitorSmartphone, Trash2 } from "lucide-react";
+import { useEffect, useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { AsciiSpinner } from "@/components/ascii/AsciiSpinner";
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
 import { cleanHeadline, HEADLINE, HEADLINE_MAX, saveHeadline } from "@/components/shell/Headline";
@@ -11,12 +11,13 @@ import { Sheet } from "@/components/ui/Sheet";
 import { api, ApiError } from "@/client/api";
 import { actions, clearLocalData, getState, useAppState } from "@/client/store";
 import { toast } from "@/client/toast";
+import type { TodoistInfo } from "@/domain/types";
 import { errorText, PasswordInput } from "./fields";
 import { deleteAccount, downloadExport } from "./requests";
 
 const LABEL = "font-mono text-[10.5px] tracking-[0.14em] text-faint uppercase";
 
-/** Email, the line on Today, password, a copy of the data, sign out (here or everywhere), and delete. */
+/** Email, the line on Today, Todoist, password, a copy of the data, sign out (here or everywhere), and delete. */
 export function AccountSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Sheet open={open} onClose={onClose} title="Account">
@@ -39,6 +40,7 @@ function AccountBody() {
 
       <div className="mt-6 border-t border-line pt-2">
         <div className="-mx-3">
+          <TodoistSection />
           <PasswordSection email={email} />
           <DownloadRow />
           <SignOutRow />
@@ -175,6 +177,142 @@ function FormError({ message }: { message: string | null }) {
       {message}
     </p>
   );
+}
+
+// ---------- Todoist ----------
+
+function TodoistSection() {
+  const { user } = useAppState();
+  const [open, setOpen] = useState(false);
+  const todoist = user?.todoist;
+  // Only offered when the server has a Todoist app set up.
+  if (!todoist?.available) return null;
+  return (
+    <>
+      <Row
+        icon={<ListChecks size={17} />}
+        label="Todoist"
+        aside={
+          todoist.connected && todoist.status === "ok" ? (
+            <span className="shrink-0 font-mono text-[11px] text-faint">ON</span>
+          ) : undefined
+        }
+        expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      />
+      {open && <TodoistPanel todoist={todoist} onDone={() => setOpen(false)} />}
+    </>
+  );
+}
+
+function TodoistPanel({ todoist, onDone }: { todoist: TodoistInfo; onDone: () => void }) {
+  const [busy, setBusy] = useState<"connect" | "sync" | "rebuild" | "disconnect" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const working = busy !== null;
+  const ok = todoist.connected && todoist.status === "ok";
+
+  // Back from Todoist without approving, the browser can show this page just as it was left.
+  useEffect(() => {
+    const reset = () => setBusy(null);
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+
+  const connect = async () => {
+    setBusy("connect");
+    setError(null);
+    try {
+      // Stays busy while the page leaves for Todoist.
+      await actions.connectTodoist();
+    } catch (err) {
+      setError(errorText(err, "Could not connect Todoist."));
+      setBusy(null);
+    }
+  };
+
+  const syncNow = async () => {
+    setBusy("sync");
+    setError(null);
+    const result = await actions.syncTodoist({ force: true });
+    setBusy(null);
+    // The reason, when Todoist gave one, shows in the error line below: a toast must fit on a phone.
+    if (result?.synced) toast("Synced with Todoist");
+    else toast("Could not sync with Todoist", { tone: "error" });
+  };
+
+  const rebuild = async () => {
+    setBusy("rebuild");
+    setError(null);
+    const result = await actions.syncTodoist({ rebuild: true });
+    setBusy(null);
+    if (!result) setError("Could not set it up again. Check your connection and try again.");
+  };
+
+  const disconnect = async () => {
+    setBusy("disconnect");
+    setError(null);
+    try {
+      await actions.disconnectTodoist();
+      toast("Todoist disconnected");
+      onDone();
+    } catch (err) {
+      setError(errorText(err, "Could not disconnect Todoist."));
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="px-3 pt-1 pb-4">
+      <p className="text-[13.5px] leading-relaxed text-muted">{todoistText(todoist)}</p>
+      {/* The other states already say what is wrong. A working connection shows its last problem here. */}
+      <FormError message={error ?? (ok && todoist.error ? todoist.error : null)} />
+      <div className="mt-3 flex justify-end gap-2">
+        {todoist.connected && (
+          <Button variant="ghost" loading={busy === "disconnect"} disabled={working} onClick={() => void disconnect()}>
+            Disconnect
+          </Button>
+        )}
+        {!todoist.connected || todoist.status === "reauth" ? (
+          <Button variant="primary" loading={busy === "connect"} disabled={working} onClick={() => void connect()}>
+            {todoist.connected ? "Connect again" : "Connect Todoist"}
+          </Button>
+        ) : todoist.status === "project_gone" ? (
+          <Button variant="primary" loading={busy === "rebuild"} disabled={working} onClick={() => void rebuild()}>
+            Set it up again
+          </Button>
+        ) : (
+          <Button variant="secondary" loading={busy === "sync"} disabled={working} onClick={() => void syncNow()}>
+            Sync now
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** What the Todoist panel says for each state of the connection. */
+function todoistText(todoist: TodoistInfo): ReactNode {
+  if (!todoist.connected) {
+    return "Send your routines and this week's tasks to Todoist. Ticks, names and notes stay the same in both.";
+  }
+  if (todoist.status === "reauth") return "Todoist asked you to connect again.";
+  if (todoist.status === "project_gone") return "The Mandaala project is gone from Todoist.";
+  return (
+    <>
+      Connected as <span className="break-all">{todoist.email}</span>. Your routines and this week&apos;s tasks are
+      in the Mandaala project.{todoist.lastSyncAt && ` Synced ${syncedWhen(todoist.lastSyncAt)}.`}
+    </>
+  );
+}
+
+/** "just now", "5 min ago", "3 h ago", or the date ("Oct 2"). */
+function syncedWhen(iso: string): string {
+  const minutes = Math.floor((Date.now() - Date.parse(iso)) / 60_000);
+  // Also covers a device clock a little behind the server's.
+  if (!(minutes >= 1)) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 24 * 60) return `${Math.floor(minutes / 60)} h ago`;
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 // ---------- password ----------

@@ -112,6 +112,83 @@ const MIGRATIONS: string[][] = [
     `ALTER TABLE cells ADD COLUMN repeat TEXT NOT NULL DEFAULT 'day'`,
     `ALTER TABLE cells ADD COLUMN repeat_on INTEGER`,
   ],
+  // Todoist sync. Every table carries user_id, except webhook deliveries (keyed by Todoist's id).
+  [
+    // One connection per account. The tokens are sealed (sealToken), never stored in plain text.
+    // expires_at, lease_until and last_catchup_at are ms epoch; expires_at is NULL for a token that
+    // never expires. status is 'ok', 'reauth' or 'project_gone'. activity_since is the time of the
+    // newest Todoist activity already handled, rollover_day the last local day missed daily
+    // routines were moved to today. The lease lets one Todoist worker run per account at a time.
+    `CREATE TABLE IF NOT EXISTS todoist_accounts (
+      user_id TEXT PRIMARY KEY,
+      todoist_user_id TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL DEFAULT '',
+      access_token TEXT NOT NULL,
+      refresh_token TEXT,
+      expires_at INTEGER,
+      project_id TEXT,
+      app_url TEXT NOT NULL DEFAULT '',
+      time_zone TEXT NOT NULL DEFAULT '',
+      week_start INTEGER NOT NULL DEFAULT 1,
+      status TEXT NOT NULL DEFAULT 'ok',
+      last_error TEXT NOT NULL DEFAULT '',
+      sync_token TEXT,
+      activity_since TEXT NOT NULL DEFAULT '',
+      last_sync_at TEXT,
+      last_catchup_at INTEGER NOT NULL DEFAULT 0,
+      rollover_day TEXT NOT NULL DEFAULT '',
+      lease_owner TEXT NOT NULL DEFAULT '',
+      lease_until INTEGER NOT NULL DEFAULT 0,
+      connected_at TEXT NOT NULL
+    )`,
+    // The Todoist task each square became. sent is JSON of what Todoist has as far as we know
+    // (NULL until the create is confirmed). echoes is JSON of our recent pushes, so a late notice
+    // of our own change is ignored, and of Todoist ticks already applied. seen_state and seen_done hold the newest Todoist event time
+    // applied for text, notes and repeat, and for done or undone. inbound_checkin is JSON
+    // {day, at} of the check-in a Todoist completion made, so an undo there removes that one.
+    `CREATE TABLE IF NOT EXISTS todoist_links (
+      cell_id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      goal_id TEXT NOT NULL,
+      task_id TEXT,
+      sent TEXT,
+      echoes TEXT NOT NULL DEFAULT '[]',
+      seen_state TEXT NOT NULL DEFAULT '',
+      seen_done TEXT NOT NULL DEFAULT '',
+      inbound_checkin TEXT NOT NULL DEFAULT '',
+      version INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS todoist_links_task ON todoist_links (task_id)`,
+    `CREATE INDEX IF NOT EXISTS todoist_links_user ON todoist_links (user_id, goal_id)`,
+    // One Todoist section per goal, named after it.
+    `CREATE TABLE IF NOT EXISTS todoist_sections (
+      goal_id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      section_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      archived INTEGER NOT NULL DEFAULT 0
+    )`,
+    `CREATE INDEX IF NOT EXISTS todoist_sections_user ON todoist_sections (user_id)`,
+    // Mandaala changes waiting to be sent. kind is 'cell', 'checkin', 'goal' or 'all'; a check-in's
+    // detail is JSON {day, done}. next_at (ms epoch) holds a row back after a failed try.
+    `CREATE TABLE IF NOT EXISTS todoist_outbox (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      target TEXT NOT NULL DEFAULT '',
+      detail TEXT NOT NULL DEFAULT '',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      next_at INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS todoist_outbox_user ON todoist_outbox (user_id, next_at)`,
+    // Webhook deliveries already handled, so a delivery Todoist sends again is applied once.
+    `CREATE TABLE IF NOT EXISTS todoist_deliveries (
+      id TEXT PRIMARY KEY,
+      received_at INTEGER NOT NULL
+    )`,
+  ],
 ];
 
 async function migrate(db: Client): Promise<void> {

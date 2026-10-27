@@ -17,6 +17,7 @@ import type {
   GoalPatch,
   GoalWithCells,
   Report,
+  TodoistInfo,
 } from "@/domain/types";
 
 export interface StoreState {
@@ -87,6 +88,10 @@ let confirmed: { seq: number; op: Confirmed }[] = [];
 let refreshTicket = 0;
 let retryDelay = 2000;
 let started = false;
+/** When the last refresh started (ms), so a window focus right after one does not ask again. */
+let refreshedAt = 0;
+/** When the last Todoist sync started (ms). The automatic ones run at most once a minute. */
+let todoistSyncedAt = 0;
 
 // ---------- subscription ----------
 
@@ -563,7 +568,9 @@ export const actions = {
         leavePage();
         throw new ApiError(401, OTHER_ACCOUNT);
       }
-      emit({ user });
+      // The answer holds only the account's own fields. The rest (the Todoist connection) stays as
+      // it is now: a sync may have changed it while this was on its way.
+      emit({ user: { ...(state.user ?? previous), ...user } });
       persistState();
     } catch (error) {
       if (state.user?.headline === headline) emit({ user: previous });
@@ -572,6 +579,25 @@ export const actions = {
     }
   },
 
+  /** Goes to Todoist to approve the app. Todoist sends the browser back to /?todoist=<result>. */
+  async connectTodoist(): Promise<void> {
+    // Offline, the page would leave for an error page, and the home-screen app has no back button there.
+    if (!navigator.onLine) throw new ApiError(0, "You're offline. Check your connection and try again.");
+    // The page goes away for a moment: edits on their way go first.
+    await synced();
+    // Todoist's answer lands in whichever account the browser is signed in as, so it must be this one.
+    if (closed || leaveIfSwitched()) return;
+    // A real page load, not the app's router: this API route sends the browser on to Todoist.
+    window.location.assign(new URL("/api/todoist/connect", window.location.origin));
+  },
+
+  /** Stops the sync. Tasks already in Todoist stay there. */
+  async disconnectTodoist(): Promise<void> {
+    const answer = await api.post<{ todoist: TodoistInfo }>("/api/todoist/disconnect");
+    showTodoist(answer.todoist);
+  },
+
+  syncTodoist: (options?: { force?: boolean; rebuild?: boolean }) => syncTodoist(options),
   refresh: () => refresh(),
   flush: () => flush(),
   synced: () => synced(),
@@ -589,6 +615,7 @@ export function cellById(id: string): Cell | undefined {
 
 async function refresh(): Promise<void> {
   if (closed) return;
+  refreshedAt = Date.now();
   if (state.status === "idle") emit({ status: "loading" });
   const ticket = ++refreshTicket;
   const seq = confirmedSeq;
@@ -626,6 +653,51 @@ function pin(account: string, fromCookie: boolean) {
   pinAccount({ id: account, fromCookie, onSwitch: close, onSignedOut: forgetSession });
 }
 
+// ---------- Todoist ----------
+
+/** Shows the Todoist connection as the server last described it. */
+function showTodoist(todoist: TodoistInfo) {
+  if (!state.user) return;
+  emit({ user: { ...state.user, todoist } });
+  persistState();
+}
+
+/**
+ * Asks the server to take in what changed in Todoist and send what waits here, then loads the
+ * chart again when Todoist changed it. `synced` is false when the server could not reach Todoist
+ * or another sync was busy. Null when the request failed.
+ */
+async function syncTodoist(
+  options: { force?: boolean; rebuild?: boolean } = {},
+): Promise<{ todoist: TodoistInfo; synced: boolean } | null> {
+  if (closed) return null;
+  todoistSyncedAt = Date.now();
+  try {
+    const answer = await api.post<{ changed: boolean; synced: boolean; todoist: TodoistInfo }>("/api/todoist/sync", {
+      // The server's "today" for routines must be the person's day, wherever they are.
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ...options,
+    });
+    showTodoist(answer.todoist);
+    if (answer.changed) await refresh();
+    return { todoist: answer.todoist, synced: answer.synced };
+  } catch {
+    return null;
+  }
+}
+
+/** The automatic sync: at most once a minute, only while connected. A failed one stays quiet. */
+function autoSyncTodoist() {
+  if (closed || state.offline || !state.user?.todoist?.connected) return;
+  if (Date.now() - todoistSyncedAt < 60_000) return;
+  void syncTodoist();
+}
+
+/** Connected and on screen, so a tick made in Todoist should show here without a reload. */
+function watchingTodoist(): boolean {
+  return !closed && Boolean(state.user?.todoist?.connected) && document.visibilityState === "visible";
+}
+
 /** Call once on the client: paints the last saved copy at once, then syncs. */
 export function startStore() {
   if (started || typeof window === "undefined") return;
@@ -660,10 +732,10 @@ export function startStore() {
       unsynced: queue.size,
     });
   }
-  void flush().then(refresh);
+  void flush().then(refresh).then(autoSyncTodoist);
 
   const resume = () => {
-    if (!leaveIfSwitched()) void flush().then(refresh);
+    if (!leaveIfSwitched()) void flush().then(refresh).then(autoSyncTodoist);
   };
   window.addEventListener("online", () => {
     retryDelay = 2000;
@@ -683,6 +755,19 @@ export function startStore() {
   window.addEventListener("focus", check);
   window.addEventListener("pageshow", check);
   if ("cookieStore" in window) window.cookieStore.addEventListener("change", check);
+  // Ticks made in Todoist reach the server at any time. While connected and on screen, load
+  // again every minute, and when the window gets focus (at most every 15 s). While the last
+  // change failed to reach Todoist, the minute's call asks the server to send it again instead:
+  // a page left open makes no other request that would. Offline it only loads, which is how the
+  // page notices it is back.
+  setInterval(() => {
+    if (!watchingTodoist()) return;
+    if (state.user?.todoist?.error && !state.offline) autoSyncTodoist();
+    else void refresh();
+  }, 60_000);
+  window.addEventListener("focus", () => {
+    if (watchingTodoist() && Date.now() - refreshedAt >= 15_000) void refresh();
+  });
 }
 
 export function clearError() {

@@ -5,6 +5,7 @@ import { HttpError } from "@/domain/errors";
 import { PILLAR_SLOT } from "@/domain/mandala";
 import type { AppState, Goal, GoalPatch, GoalWithCells } from "@/domain/types";
 import { eventStatement, groupCells, isConflict, newId, now, refusal, stillOwned, toCell, toCheckin, toGoal, USER_CELLS } from "./shared";
+import { goalOutboxStatement } from "./todoist";
 
 // Goals and their 72 squares: reading the whole chart, creating, editing and deleting goals.
 
@@ -160,6 +161,8 @@ export async function updateGoal(userId: string, id: string, patch: GoalPatch): 
         }),
       );
     }
+    // Todoist names a section after the goal, and holds its tasks only while it is active.
+    if (patch.title !== undefined || patch.status !== undefined) statements.push(goalOutboxStatement(userId, id));
     await db.batch(statements, "write");
   }
   return getGoalOnly(userId, id);
@@ -170,6 +173,8 @@ export async function deleteGoal(userId: string, id: string): Promise<void> {
   const db = await getDb();
   await db.batch(
     [
+      // First, while the goal still exists: its tasks in Todoist go too.
+      goalOutboxStatement(userId, id),
       { sql: "DELETE FROM cells WHERE goal_id = ?", args: [id] },
       { sql: "DELETE FROM checkins WHERE goal_id = ? AND user_id = ?", args: [id, userId] },
       { sql: "DELETE FROM events WHERE goal_id = ? AND user_id = ?", args: [id, userId] },

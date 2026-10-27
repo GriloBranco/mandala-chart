@@ -81,6 +81,22 @@ export interface Account {
   email: string;
   /** The line at the top of Today; empty means the default one. */
   headline: string;
+  /** Optional: copies saved on a device before Todoist existed lack it. */
+  todoist?: TodoistInfo;
+}
+
+/** The Todoist connection as the account page shows it. */
+export interface TodoistInfo {
+  /** The server has a Todoist app set up, so the account page offers it. */
+  available: boolean;
+  connected: boolean;
+  /** "reauth": Todoist wants a fresh sign-in. "project_gone": the Mandaala project was deleted or archived there. */
+  status: "ok" | "reauth" | "project_gone" | null;
+  /** The Todoist account's email. */
+  email: string;
+  lastSyncAt: string | null;
+  /** The last thing that went wrong, in plain words ('' when fine). */
+  error: string;
 }
 
 export interface AppState {

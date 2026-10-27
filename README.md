@@ -19,6 +19,8 @@ Works in the browser on desktop and phone. On iPhone, open it in Safari and use 
 - Reports: write a few lines about your day, for one goal or all of them. Each one is kept in a
   history you can read back.
 - Works offline for edits: changes are saved on the device and sync when you are back online.
+- Todoist, if you connect it on the account page: routines and this week's actions show up as
+  tasks there, and ticks, names and notes stay the same in both apps.
 - Account page: change password, download all your data, sign out everywhere, delete your account.
 
 ## Run it locally
@@ -49,6 +51,41 @@ Environment variables (see `.env.example`):
 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | yes, in production | Set by the Turso integration |
 | `SIGNUP_CODE` | optional | Invite-only: new accounts must enter this code. Use a random one, not a word |
 | `SIGNUPS_CLOSED` | optional | Set to `1` to stop new accounts |
+| `TODOIST_CLIENT_ID`, `TODOIST_CLIENT_SECRET` | optional | Turn on Todoist: your app's Client ID and Client secret (see Todoist) |
+| `TODOIST_TOKEN_KEY` | optional | Encrypts the stored Todoist tokens (32 random bytes, base64). Without it the key comes from `SESSION_SECRET` |
+| `CRON_SECRET` | with Todoist | Lets Vercel Cron run the daily Todoist job (any long random string) |
+
+## Todoist
+
+Each person can connect their own Todoist account on the account page. The app keeps a project
+named Mandaala there, with a section for each goal. When Todoist's free plan has no room for
+another project, it uses the Inbox instead.
+
+- Routines become repeating tasks. A missed daily routine moves to today instead of piling up.
+- This week's actions become tasks due at the end of the week.
+- Ticks, names, notes and repeats stay the same in both apps, whichever side you change them on.
+- Removing an action from this week deletes its task, and deleting the task removes the action
+  from this week.
+- Achieving, archiving or deleting a goal deletes its open tasks. Restoring the goal brings them back.
+- Priority follows the leverage ratings. It never uses p1, which stays yours.
+- Tasks you add in Todoist, labels, reminders, times and repeats Mandaala cannot show (every other
+  week, say) stay in Todoist only.
+
+Todoist sends a notice for each change made there. The app also catches up when it opens, and once
+a day for every account (`vercel.json`), since notices can arrive late or not at all.
+
+To turn it on:
+
+1. Open Todoist's [App Management Console](https://app.todoist.com/app/settings/integrations/app-management)
+   and create an app.
+2. Set its OAuth redirect URL to `https://<your domain>/api/todoist/callback`.
+3. Set its webhook callback URL to `https://<your domain>/api/todoist/webhook`, pick the events
+   `item:updated`, `item:completed`, `item:uncompleted`, `item:deleted`, `project:deleted` and
+   `project:archived`, then activate the webhook.
+4. Add the app's Client ID and Client secret to Vercel as `TODOIST_CLIENT_ID` and
+   `TODOIST_CLIENT_SECRET`, add a `CRON_SECRET`, and deploy again.
+
+Connect from that same domain: Todoist only sends people back to the redirect URL you set.
 
 ## Limits
 
@@ -79,6 +116,8 @@ sign-up, since one person could use it up and lock everyone else out.
   page elsewhere cannot sign you in to its own account or act for you.
 - Sign out everywhere (on the account page) ends every session on every device. Changing the password
   does the same for every device but the one you are on.
+- Todoist tokens are stored encrypted. Disconnecting Todoist, or deleting the account, revokes them.
+  Tasks already in Todoist stay there.
 
 ## How it is built
 
@@ -91,7 +130,7 @@ src/
   app/          pages and API routes. Routes stay thin: check input, call src/server, answer.
   components/   the screens, one folder per feature, plus ui/ (buttons, sheets) and shared/
   domain/       the chart rules, types and input checks. No React, no I/O
-  server/       server only: database, data access (repo/), accounts, limits
+  server/       server only: database, data access (repo/), accounts, limits, Todoist sync (todoist/)
   client/       browser only: the store with the offline queue, API calls, navigation
   proxy.ts      sends signed-out visitors to /login
 ```

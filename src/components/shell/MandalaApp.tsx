@@ -16,6 +16,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import { navigate, useView, viewGoalId, type View } from "@/client/nav";
 import { closeReport, openReport, useReportRequest } from "@/client/report-sheet";
 import { actions, startStore, useAppState } from "@/client/store";
+import { toast } from "@/client/toast";
 import { ShellContext } from "./ShellContext";
 import { Sidebar } from "./Sidebar";
 
@@ -47,13 +48,10 @@ function App() {
   useEffect(() => {
     startStore();
     // Home-screen shortcut and deep link: /?report=1 opens the report sheet straight away.
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("report")) {
-      params.delete("report");
-      const query = params.toString();
-      window.history.replaceState(window.history.state, "", query ? `/?${query}` : "/");
-      openReport(null);
-    }
+    if (takeParam("report") !== null) openReport(null);
+    // Todoist sends the browser back to /?todoist=<result> after connecting.
+    const todoist = takeParam("todoist");
+    if (todoist) todoistToast(todoist);
   }, []);
 
   useEffect(() => {
@@ -96,6 +94,25 @@ function App() {
       </div>
     </ShellContext>
   );
+}
+
+/** Reads a one-time flag and removes it from the address, so a reload does not act on it again. */
+function takeParam(name: string): string | null {
+  const params = new URLSearchParams(window.location.search);
+  const value = params.get(name);
+  if (value === null) return null;
+  params.delete(name);
+  const query = params.toString();
+  window.history.replaceState(window.history.state, "", query ? `/?${query}` : "/");
+  return value;
+}
+
+/** Says how connecting Todoist went, in words short enough for one line on a phone. */
+function todoistToast(result: string) {
+  if (result === "connected") toast("Todoist connected");
+  else if (result === "denied") toast("Todoist was not connected");
+  else if (result === "taken") toast("Todoist is linked to another account", { tone: "error" });
+  else if (result === "error") toast("Could not connect Todoist", { tone: "error" });
 }
 
 function Content({ view }: { view: View }) {

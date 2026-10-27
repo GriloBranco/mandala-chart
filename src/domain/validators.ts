@@ -101,3 +101,14 @@ export const changePasswordSchema = z.object({
 export const deleteAccountSchema = z.object({
   password: z.string().max(200),
 });
+
+// ---------- todoist ----------
+
+export const todoistSyncSchema = z.object({
+  /** The browser's IANA time zone, so "today" on the server matches the person's day. */
+  timezone: z.string().max(64).optional(),
+  /** Ignore the once-a-minute limit and send everything again. */
+  force: z.boolean().optional(),
+  /** Make a new Mandaala project after the old one was deleted in Todoist. */
+  rebuild: z.boolean().optional(),
+});

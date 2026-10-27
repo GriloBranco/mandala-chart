@@ -10,6 +10,8 @@ export interface User {
   /** Bumped to sign out every device (password change, "sign out everywhere"). */
   sessionVersion: number;
   createdAt: string;
+  /** Connected to Todoist. False from getUserForLogin, which does not look. */
+  todoist: boolean;
 }
 
 function toUser(row: Row): User {
@@ -19,6 +21,7 @@ function toUser(row: Row): User {
     headline: String(row.headline),
     sessionVersion: Number(row.session_version),
     createdAt: String(row.created_at),
+    todoist: Number(row.todoist) === 1,
   };
 }
 
@@ -33,7 +36,10 @@ export function normalizeEmail(email: string): string {
 
 export async function getUser(id: string): Promise<User | null> {
   const db = await getDb();
-  const result = await db.execute({ sql: "SELECT * FROM users WHERE id = ?", args: [id] });
+  const result = await db.execute({
+    sql: "SELECT *, EXISTS (SELECT 1 FROM todoist_accounts WHERE user_id = users.id) AS todoist FROM users WHERE id = ?",
+    args: [id],
+  });
   return result.rows.length ? toUser(result.rows[0]) : null;
 }
 
@@ -97,6 +103,11 @@ export async function deleteUser(id: string): Promise<void> {
       { sql: "DELETE FROM events WHERE user_id = ?", args: [id] },
       { sql: "DELETE FROM reports WHERE user_id = ?", args: [id] },
       { sql: "DELETE FROM goals WHERE user_id = ?", args: [id] },
+      // The Todoist connection and what it kept. Tasks already in Todoist stay there.
+      { sql: "DELETE FROM todoist_outbox WHERE user_id = ?", args: [id] },
+      { sql: "DELETE FROM todoist_sections WHERE user_id = ?", args: [id] },
+      { sql: "DELETE FROM todoist_links WHERE user_id = ?", args: [id] },
+      { sql: "DELETE FROM todoist_accounts WHERE user_id = ?", args: [id] },
       { sql: "DELETE FROM users WHERE id = ?", args: [id] },
     ],
     "write",

@@ -1,10 +1,11 @@
 import "server-only";
-import { connection, NextResponse, type NextRequest } from "next/server";
+import { after, connection, NextResponse, type NextRequest } from "next/server";
 import { ZodError, type ZodType } from "zod";
 import { readSession, SESSION_COOKIE, UID_COOKIE } from "./auth";
 import { HttpError, OTHER_ACCOUNT } from "@/domain/errors";
 import { clearSessionCookies, userFor } from "./session";
 import { budgetWait, spendBudget } from "./throttle";
+import { drainTodoist } from "./todoist";
 import type { User } from "./users";
 
 export { HttpError };
@@ -113,7 +114,11 @@ export function route<C>(handler: Handler<C>): (request: NextRequest, context: C
       if (!user) return notSignedIn(request);
       const wait = await spendBudget(user.id);
       if (wait) return tooMany(wait, `Too many requests. Try again in ${wait} min.`);
-      return await handler(request, context, user);
+      const response = await handler(request, context, user);
+      // A change may have queued work for Todoist. It goes out after the answer, so the app
+      // never waits on Todoist; what Todoist cannot take now stays queued and is tried later.
+      if (user.todoist && !READS.has(request.method)) after(() => drainTodoist(user.id));
+      return response;
     } catch (error) {
       return errorResponse(error);
     }
