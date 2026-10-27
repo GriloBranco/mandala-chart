@@ -108,6 +108,10 @@ export async function deleteUser(id: string): Promise<void> {
       { sql: "DELETE FROM todoist_sections WHERE user_id = ?", args: [id] },
       { sql: "DELETE FROM todoist_links WHERE user_id = ?", args: [id] },
       { sql: "DELETE FROM todoist_accounts WHERE user_id = ?", args: [id] },
+      // Reminders, and the devices they went to.
+      { sql: "DELETE FROM push_sent WHERE endpoint IN (SELECT endpoint FROM push_devices WHERE user_id = ?)", args: [id] },
+      { sql: "DELETE FROM push_devices WHERE user_id = ?", args: [id] },
+      { sql: "DELETE FROM reminders WHERE user_id = ?", args: [id] },
       { sql: "DELETE FROM users WHERE id = ?", args: [id] },
     ],
     "write",

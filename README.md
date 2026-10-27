@@ -19,6 +19,8 @@ Works in the browser on desktop and phone. On iPhone, open it in Safari and use 
 - Reports: write a few lines about your day, for one goal or all of them. Each one is kept in a
   history you can read back.
 - Works offline for edits: changes are saved on the device and sync when you are back online.
+- Reminders as notifications, if you turn them on on the account page: one every day at 7 PM to
+  write your report, and as many more as you like, each at its own time.
 - Todoist, if you connect it on the account page: routines and this week's actions show up as
   tasks there, and ticks, names and notes stay the same in both apps.
 - Account page: change password, download all your data, sign out everywhere, delete your account.
@@ -53,7 +55,9 @@ Environment variables (see `.env.example`):
 | `SIGNUPS_CLOSED` | optional | Set to `1` to stop new accounts |
 | `TODOIST_CLIENT_ID`, `TODOIST_CLIENT_SECRET` | optional | Turn on Todoist: your app's Client ID and Client secret (see Todoist) |
 | `TODOIST_TOKEN_KEY` | optional | Encrypts the stored Todoist tokens (32 random bytes, base64). Without it the key comes from `SESSION_SECRET` |
-| `CRON_SECRET` | with Todoist | Lets Vercel Cron run the daily Todoist job (any long random string) |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | optional | Turn on notifications: the app's push keys (see Notifications) |
+| `VAPID_SUBJECT` | optional | An `https:` or `mailto:` address push services can reach you at. Defaults to the site's address |
+| `CRON_SECRET` | with Todoist or notifications | Lets the scheduled jobs in: Vercel Cron's daily Todoist job and the reminder job (any long random string) |
 
 ## Todoist
 
@@ -87,6 +91,29 @@ To turn it on:
 
 Connect from that same domain: Todoist only sends people back to the redirect URL you set.
 
+## Notifications
+
+Each person can turn on reminders on the account page, on every phone or computer they want
+them on. The first one is every day at 7 PM, to write the day's report; they can change its time
+and words, and add more. A reminder goes out on each device's own clock, so it follows them when
+they travel.
+
+On iPhone and iPad, notifications only work in the app added to the Home Screen (Safari, Share,
+Add to Home Screen), on iOS 16.4 or later. Chrome, Edge, Firefox and Safari on a Mac show them
+from the website.
+
+To turn them on:
+
+1. Make the app's push keys with `npx web-push generate-vapid-keys`, and add them to Vercel as
+   `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (the public key) and `VAPID_PRIVATE_KEY` (the private key). Add
+   a `CRON_SECRET` if there is none yet, and deploy again. New keys mean everyone has to turn
+   notifications on again.
+2. Have a scheduler call `https://<your domain>/api/notifications/cron` every minute (or every
+   few) with the header `Authorization: Bearer <CRON_SECRET>`. Vercel Cron runs at most once a
+   day on the Hobby plan, so use an outside one, such as a free [cron-job.org](https://cron-job.org)
+   job. A reminder still goes out up to two hours late if the scheduler misses its time, and never
+   twice.
+
 ## Limits
 
 These keep a public deployment from being guessed at or flooded. They are fixed in the code
@@ -118,6 +145,8 @@ sign-up, since one person could use it up and lock everyone else out.
   does the same for every device but the one you are on.
 - Todoist tokens are stored encrypted. Disconnecting Todoist, or deleting the account, revokes them.
   Tasks already in Todoist stay there.
+- Notifications go only to the push services of Apple, Google, Mozilla and Microsoft. Signing out
+  turns them off on that device, and signing out everywhere turns them off on every device.
 
 ## How it is built
 

@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { after, connection, NextResponse, type NextRequest } from "next/server";
 import { ZodError, type ZodType } from "zod";
 import { readSession, SESSION_COOKIE, UID_COOKIE } from "./auth";
@@ -138,6 +139,21 @@ export function publicRoute<C>(
       return errorResponse(error);
     }
   };
+}
+
+/** Compares without leaking where the texts differ; hashing first gives both the same length. */
+function sameText(a: string, b: string): boolean {
+  const digest = (text: string) => createHash("sha256").update(text).digest();
+  return timingSafeEqual(digest(a), digest(b));
+}
+
+/**
+ * True for the scheduled jobs (Vercel Cron, the reminder scheduler), which send CRON_SECRET as a
+ * bearer token. With no secret set, nobody may run them.
+ */
+export function fromCron(request: NextRequest): boolean {
+  const secret = process.env.CRON_SECRET;
+  return Boolean(secret) && sameText(request.headers.get("authorization") ?? "", `Bearer ${secret}`);
 }
 
 export async function readJson<T>(request: NextRequest, schema: ZodType<T>): Promise<T> {

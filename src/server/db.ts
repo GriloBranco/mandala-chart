@@ -189,6 +189,40 @@ const MIGRATIONS: string[][] = [
       received_at INTEGER NOT NULL
     )`,
   ],
+  // Reminders sent as push notifications.
+  [
+    // time is HH:MM on each device's own clock; text is empty for the default line. time_set_at
+    // (ms epoch) is when the time was last set, so a time already past today waits for tomorrow.
+    `CREATE TABLE IF NOT EXISTS reminders (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      time TEXT NOT NULL,
+      text TEXT NOT NULL DEFAULT '',
+      time_set_at INTEGER NOT NULL,
+      created_at TEXT NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS reminders_user ON reminders (user_id)`,
+    // The devices that turned notifications on, with the keys their browser gave and their time
+    // zone. added_at (ms epoch) is when the device joined this account.
+    `CREATE TABLE IF NOT EXISTS push_devices (
+      endpoint TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      time_zone TEXT NOT NULL,
+      added_at INTEGER NOT NULL,
+      seen_at INTEGER NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS push_devices_user ON push_devices (user_id)`,
+    // Each reminder a device got, by the local day it was for, so it goes out once a day.
+    `CREATE TABLE IF NOT EXISTS push_sent (
+      endpoint TEXT NOT NULL,
+      reminder_id TEXT NOT NULL,
+      day TEXT NOT NULL,
+      sent_at INTEGER NOT NULL,
+      PRIMARY KEY (endpoint, reminder_id, day)
+    )`,
+  ],
 ];
 
 async function migrate(db: Client): Promise<void> {

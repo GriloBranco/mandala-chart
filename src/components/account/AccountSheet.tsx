@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Download, KeyRound, ListChecks, LogOut, MonitorSmartphone, Trash2 } from "lucide-react";
+import { Bell, ChevronDown, Download, KeyRound, ListChecks, LogOut, MonitorSmartphone, Trash2 } from "lucide-react";
 import { useEffect, useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { AsciiSpinner } from "@/components/ascii/AsciiSpinner";
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
@@ -9,15 +9,20 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/cn";
 import { Sheet } from "@/components/ui/Sheet";
 import { api, ApiError } from "@/client/api";
+import { deviceSubscription, pushOffered, turnOffPush } from "@/client/push";
 import { actions, clearLocalData, getState, useAppState } from "@/client/store";
 import { toast } from "@/client/toast";
 import type { TodoistInfo } from "@/domain/types";
-import { errorText, PasswordInput } from "./fields";
+import { errorText, FormError, PasswordInput } from "./fields";
+import { NotificationsPanel } from "./NotificationsPanel";
 import { deleteAccount, downloadExport } from "./requests";
 
 const LABEL = "font-mono text-[10.5px] tracking-[0.14em] text-faint uppercase";
 
-/** Email, the line on Today, Todoist, password, a copy of the data, sign out (here or everywhere), and delete. */
+/**
+ * Email, the line on Today, notifications, Todoist, password, a copy of the data, sign out (here or
+ * everywhere), and delete.
+ */
 export function AccountSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Sheet open={open} onClose={onClose} title="Account">
@@ -40,6 +45,7 @@ function AccountBody() {
 
       <div className="mt-6 border-t border-line pt-2">
         <div className="-mx-3">
+          <NotificationsSection />
           <TodoistSection />
           <PasswordSection email={email} />
           <DownloadRow />
@@ -171,11 +177,38 @@ function Row({
   );
 }
 
-function FormError({ message }: { message: string | null }) {
+// ---------- notifications ----------
+
+function NotificationsSection() {
+  const [open, setOpen] = useState(false);
+  // Null until this device has been checked.
+  const [on, setOn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    deviceSubscription()
+      .catch(() => null)
+      .then((subscription) => {
+        if (live) setOn(subscription !== null);
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  // Only offered when the server has push keys set up.
+  if (!pushOffered()) return null;
   return (
-    <p role="alert" className={cn("text-[13.5px] leading-snug text-danger", message && "mt-2.5")}>
-      {message}
-    </p>
+    <>
+      <Row
+        icon={<Bell size={17} />}
+        label="Notifications"
+        aside={on ? <span className="shrink-0 font-mono text-[11px] text-faint">ON</span> : undefined}
+        expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      />
+      {open && on !== null && <NotificationsPanel on={on} onChange={setOn} />}
+    </>
   );
 }
 
@@ -451,6 +484,8 @@ async function signOut(everywhere: boolean): Promise<boolean> {
   if (!(await actions.synced()) && !window.confirm("Some changes are not saved yet. Sign out and lose them?")) {
     return false;
   }
+  // A signed-out device gets no reminders. Done first: it needs the session.
+  await turnOffPush().catch(() => undefined);
   try {
     await api.post("/api/auth/logout", everywhere ? { everywhere: true } : undefined);
   } catch (error) {

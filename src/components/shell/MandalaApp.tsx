@@ -14,6 +14,7 @@ import { cn } from "@/components/ui/cn";
 import { useIsDesktop } from "@/components/ui/hooks";
 import { Toaster } from "@/components/ui/Toaster";
 import { navigate, useView, viewGoalId, type View } from "@/client/nav";
+import { refreshPush } from "@/client/push";
 import { closeReport, openReport, useReportRequest } from "@/client/report-sheet";
 import { actions, startStore, useAppState } from "@/client/store";
 import { toast } from "@/client/toast";
@@ -52,6 +53,17 @@ function App() {
     // Todoist sends the browser back to /?todoist=<result> after connecting.
     const todoist = takeParam("todoist");
     if (todoist) todoistToast(todoist);
+  }, []);
+
+  useEffect(() => {
+    // Reminders go out on this device's clock: tell the server about it on opening, and when its
+    // time zone changes.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshPush(false);
+    };
+    void refreshPush(true);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
   useEffect(() => {

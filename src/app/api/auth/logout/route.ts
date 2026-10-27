@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readSession } from "@/server/auth";
 import { isJson, otherAccount, publicRoute } from "@/server/http";
+import { deletePushDevices } from "@/server/repo";
 import { clearSessionCookies, endAllSessions, userFor } from "@/server/session";
 
 async function wantsEverywhere(request: Request): Promise<boolean> {
@@ -11,7 +12,7 @@ async function wantsEverywhere(request: Request): Promise<boolean> {
 
 /**
  * Signs this device out. With {"everywhere": true} it first ends every session of the account,
- * on every device, which needs a session that still works.
+ * on every device, and turns their notifications off, which needs a session that still works.
  */
 export const POST = publicRoute(async (request) => {
   const session = await readSession(request.cookies);
@@ -29,6 +30,8 @@ export const POST = publicRoute(async (request) => {
     }
     // If this throws, the answer is a 500 and the cookies stay, so the person can try again.
     await endAllSessions(user.id);
+    // Signed-out devices get no reminders. They come back when that device signs in again.
+    await deletePushDevices(user.id);
   }
   const response = NextResponse.json({ ok: true });
   clearSessionCookies(response);

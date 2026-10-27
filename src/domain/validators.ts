@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { NOTES_MAX } from "./mandala";
+import { isPushEndpoint, isTimeZone, REMINDER_TEXT_MAX, REMINDERS_MAX } from "./reminders";
 
 export const daySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
 const pillarIndex = z.number().int().min(0).max(7);
@@ -112,3 +113,34 @@ export const todoistSyncSchema = z.object({
   /** Make a new Mandaala project after the old one was deleted in Todoist. */
   rebuild: z.boolean().optional(),
 });
+
+// ---------- reminders ----------
+
+export const remindersSchema = z.object({
+  /** The whole list: reminders left out are deleted. */
+  reminders: z
+    .array(
+      z.object({
+        /** Chosen by the client, so a reminder keeps its id across saves. */
+        id: z.uuid(),
+        time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM"),
+        text: z.string().trim().max(REMINDER_TEXT_MAX),
+      }),
+    )
+    .max(REMINDERS_MAX, `Up to ${REMINDERS_MAX} reminders.`),
+});
+
+const endpointSchema = z.string().max(2048).refine(isPushEndpoint, "Not a push service address");
+
+/** A device turning notifications on, as its browser's push subscription describes it. */
+export const pushDeviceSchema = z.object({
+  endpoint: endpointSchema,
+  keys: z.object({
+    p256dh: z.string().regex(/^[A-Za-z0-9_-]{80,100}={0,2}$/),
+    auth: z.string().regex(/^[A-Za-z0-9_-]{16,32}={0,2}$/),
+  }),
+  /** The device's IANA time zone: its reminders go out on its own clock. */
+  timeZone: z.string().max(64).refine(isTimeZone, "Unknown time zone"),
+});
+
+export const pushEndpointSchema = z.object({ endpoint: endpointSchema });

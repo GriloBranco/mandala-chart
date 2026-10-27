@@ -29,6 +29,15 @@ export function errorText(error: unknown, fallback: string): string {
   return error.offline ? "You're offline. Check your connection and try again." : error.message;
 }
 
+/** A form's error line. Empty, it takes no room. */
+export function FormError({ message }: { message: string | null }) {
+  return (
+    <p role="alert" className={cn("text-[13.5px] leading-snug text-danger", message && "mt-2.5")}>
+      {message}
+    </p>
+  );
+}
+
 /** Stops a tap from taking focus out of the field, so the phone keyboard stays up. */
 function keepFocus(event: SyntheticEvent) {
   event.preventDefault();

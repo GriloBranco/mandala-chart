@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { readSession } from "@/server/auth";
 
 // The welcome page and the account endpoints are open; everything else needs a session.
-// Todoist's notices and the daily job carry no session (they are checked by signature and
+// Todoist's notices and the scheduled jobs carry no session (they are checked by signature and
 // secret), and the Todoist callback sends a signed-out browser to sign-in itself.
 // This only checks the cookie's signature (no database). Route handlers do the full check.
 const PUBLIC_PATHS = new Set([
@@ -14,6 +14,7 @@ const PUBLIC_PATHS = new Set([
   "/api/todoist/webhook",
   "/api/todoist/callback",
   "/api/todoist/cron",
+  "/api/notifications/cron",
 ]);
 
 export async function proxy(request: NextRequest) {
