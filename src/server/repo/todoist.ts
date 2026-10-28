@@ -2,6 +2,7 @@ import "server-only";
 import type { InStatement, ResultSet, Row } from "@libsql/client";
 import { getDb } from "@/server/db";
 import { HttpError } from "@/domain/errors";
+import { todoistPaused } from "@/server/todoist/config";
 import { isConflict, newId, placeholders, stillOwned, USER_CELLS, type Guard } from "./shared";
 
 // Todoist sync: the connection, the task each square became, one section per goal, and the
@@ -425,9 +426,16 @@ function toOutboxRow(row: Row): OutboxRow {
   };
 }
 
-/** Queues a change, only when the user has a Todoist account (and `when` holds). */
+/** Holds for no row. */
+const NEVER: Guard = { sql: "0", args: [] };
+
+/**
+ * Queues a change, only when the user has a Todoist account (and `when` holds). Nothing is queued
+ * while the sync is paused: there is nothing to send it.
+ */
 function outboxStatement(userId: string, kind: OutboxRow["kind"], target: string, detail: string, when?: Guard): InStatement {
   const guards = when ? [hasTodoist(userId), when] : [hasTodoist(userId)];
+  if (todoistPaused()) guards.push(NEVER);
   return {
     sql: `INSERT INTO todoist_outbox (id, user_id, kind, target, detail, attempts, next_at, created_at)
       SELECT ?, ?, ?, ?, ?, 0, 0, ? WHERE ${guards.map((guard) => guard.sql).join(" AND ")}`,

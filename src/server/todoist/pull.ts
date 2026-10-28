@@ -29,7 +29,7 @@ const DELIVERY_MS = 24 * 60 * 60_000;
  * sends what is queued, then moves missed daily routines to today. Reads Todoist at most once a minute
  * unless forced, and always sends what waits. Returns changed = true when Mandaala changed, and
  * synced = false when an error stopped it (Todoist not answering is also saved as the account's
- * lastError, for the account page). Never throws; null when another worker is busy.
+ * lastError, for the account page). Never throws; null when another worker is busy, or while paused.
  */
 export async function catchUpTodoist(
   userId: string,

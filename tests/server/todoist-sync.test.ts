@@ -2024,3 +2024,41 @@ describe("the daily job", () => {
     expect(await todoistDeliverySeen(old)).toBe(false);
   });
 });
+
+describe("while paused", () => {
+  it("is not offered, and nothing goes between the two apps", async () => {
+    const { userId, ids } = await setup([{ text: "Buy sunscreen" }, { text: "Drink water", how: "day" }]);
+    later(5 * MINUTE);
+    vi.stubEnv("TODOIST_SYNC", "");
+    const requests = fake.requests().length;
+    // The account page shows no Todoist, so the app asks for no syncs.
+    expect(await info(userId)).toMatchObject({ available: false, connected: false });
+
+    // Deleted, finished and ticked in Todoist: the notices are taken, and Mandaala stays as it is,
+    // through the catch-up and the daily job too.
+    const notices = [
+      fake.remove(taskOf(ids["Buy sunscreen"]).id),
+      fake.completeForever(taskOf(ids["Drink water"]).id),
+    ];
+    expect(await deliver(...notices)).toEqual(allOk(notices));
+    expect(await catchUpTodoist(userId, { force: true })).toBeNull();
+    expect(await runTodoistDaily()).toEqual({ accounts: 0 });
+    expect(await getCell(userId, ids["Buy sunscreen"])).toMatchObject({ active: true, status: "todo" });
+    expect(await getCell(userId, ids["Drink water"])).toMatchObject({ active: true, status: "todo", kind: "habit" });
+    expect(await checkins(userId, ids["Drink water"])).toEqual([]);
+
+    // Changes made here are not kept for Todoist, and nothing is sent.
+    await setCheckin(userId, ids["Drink water"], TODAY, true);
+    await updateCell(userId, ids["Buy sunscreen"], { text: "Buy SPF 30" });
+    expect(await nextTodoistOutbox(userId)).toBeNull();
+    await drainTodoist(userId);
+
+    // Nobody connects meanwhile, not even with an approval started before the pause.
+    const other = await person();
+    const { url, cookie } = startTodoistConnect(other.userId, APP);
+    const { code, state } = fake.approve(url, other.todoistUserId);
+    expect(await finishTodoistConnect(other.userId, { code, state, error: null, cookie, origin: APP })).toBe("error");
+    expect(await todoistRows(other.userId)).toBe(0);
+    expect(fake.requests()).toHaveLength(requests);
+  });
+});

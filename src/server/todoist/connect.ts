@@ -16,7 +16,7 @@ import {
   type TodoistAccountRow,
 } from "@/server/repo";
 import { authorizeUrl, exchangeCode, revokeToken, todoistApi, type TodoistUser, type TokenSet } from "./api";
-import { todoistAvailable } from "./config";
+import { todoistAvailable, todoistPaused } from "./config";
 import { openToken, sealToken, signValue } from "./crypto";
 import { ensureProject, projectAlive } from "./push";
 import { withTodoist, type TodoistWorker } from "./session";
@@ -55,6 +55,8 @@ export async function finishTodoistConnect(
   userId: string,
   input: { code: string | null; state: string | null; error: string | null; cookie: string | undefined; origin: string },
 ): Promise<"connected" | "denied" | "taken" | "error"> {
+  // Paused, or the app is not set up: an approval still on its way connects nothing.
+  if (!todoistAvailable()) return "error";
   if (input.error) return "denied";
   if (!input.code || !stateMatches(input.cookie, input.state, userId)) return "error";
   try {
@@ -180,8 +182,9 @@ export async function rebuildTodoist(userId: string): Promise<void> {
 export async function todoistInfo(user: { id: string; todoist: boolean }): Promise<TodoistInfo> {
   const available = todoistAvailable();
   const none: TodoistInfo = { available, connected: false, status: null, email: "", lastSyncAt: null, error: "" };
-  // Runs on every /api/state: no lookup for an account that never connected.
-  if (!user.todoist) return none;
+  // Runs on every /api/state: no lookup for an account that never connected. While paused the app
+  // shows no connection, so it does not ask for syncs either.
+  if (!user.todoist || todoistPaused()) return none;
   const account = await getTodoistAccount(user.id);
   if (!account) return none;
   return {

@@ -8,7 +8,7 @@ import {
   todoistDeliverySeen,
   todoistLinkForTask,
 } from "@/server/repo";
-import { todoistApp } from "./config";
+import { todoistApp, todoistPaused } from "./config";
 import { applyInbound, eventsFromWebhook, type InboundEvent } from "./inbound";
 import { pushQueued } from "./push";
 import { withTodoist, type TodoistWorker } from "./session";
@@ -33,6 +33,8 @@ export async function handleTodoistWebhook(raw: string, headers: Headers): Promi
   const app = todoistApp();
   if (!app) return 404;
   if (!verifyTodoistSignature(raw, headers.get("x-todoist-hmac-sha256"), app.clientSecret)) return 401;
+  // Paused: taken and dropped, so Todoist does not send it again.
+  if (todoistPaused()) return 200;
   let payload: unknown;
   try {
     payload = JSON.parse(raw);

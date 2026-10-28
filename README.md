@@ -21,8 +21,6 @@ Works in the browser on desktop and phone. On iPhone, open it in Safari and use 
 - Works offline for edits: changes are saved on the device and sync when you are back online.
 - Reminders as notifications, if you turn them on on the account page: one every day at 7 PM to
   write your report, and as many more as you like, each at its own time.
-- Todoist, if you connect it on the account page: routines and this week's actions show up as
-  tasks there, and ticks, names and notes stay the same in both apps.
 - Account page: change password, download all your data, sign out everywhere, delete your account.
 
 ## Run it locally
@@ -55,11 +53,17 @@ Environment variables (see `.env.example`):
 | `SIGNUPS_CLOSED` | optional | Set to `1` to stop new accounts |
 | `TODOIST_CLIENT_ID`, `TODOIST_CLIENT_SECRET` | optional | Turn on Todoist: your app's Client ID and Client secret (see Todoist) |
 | `TODOIST_TOKEN_KEY` | optional | Encrypts the stored Todoist tokens (32 random bytes, base64). Without it the key comes from `SESSION_SECRET` |
+| `TODOIST_SYNC` | optional | `on` turns the paused Todoist sync back on (see Todoist) |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | optional | Turn on notifications: the app's push keys (see Notifications) |
 | `VAPID_SUBJECT` | optional | An `https:` or `mailto:` address push services can reach you at. Defaults to the site's address |
 | `CRON_SECRET` | with Todoist or notifications | Lets the scheduled jobs in: Vercel Cron's daily Todoist job and the reminder job (any long random string) |
 
 ## Todoist
+
+Paused since 2026-10-28, while a routine that dropped off Today is looked into (see `BACKLOG.md`).
+The account page does not offer Todoist, and nothing goes to Todoist or comes back from it.
+Connections made before stay in the database, untouched. Everything below is how it works when
+`TODOIST_SYNC=on`.
 
 Each person can connect their own Todoist account on the account page. The app keeps a project
 named Mandaala there, with a section for each goal. When Todoist's free plan has no room for

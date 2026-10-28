@@ -7,6 +7,7 @@ import {
   type TodoistAccountRow,
 } from "@/server/repo";
 import { refreshTokens, todoistApi, TodoistError, type TodoistApi, type TokenSet } from "./api";
+import { todoistPaused } from "./config";
 import { openToken, SealError, sealToken } from "./crypto";
 
 // One Todoist worker per account at a time, on any server instance. Todoist rotates the refresh
@@ -139,9 +140,9 @@ function startWorker(userId: string, owner: string, account: TodoistAccountRow):
 
 /**
  * Runs `work` while holding the account's lease, so only one Todoist worker runs per account (two token
- * refreshes at once could get every token revoked). Returns null when there is no account, or when another
- * worker still holds the lease after `waitMs` (default 0; polls every 250 ms). The lease lasts 60 s and is
- * extended by keepAlive(); it is always released in finally.
+ * refreshes at once could get every token revoked). Returns null when there is no account, while the sync
+ * is paused, or when another worker still holds the lease after `waitMs` (default 0; polls every 250 ms).
+ * The lease lasts 60 s and is extended by keepAlive(); it is always released in finally.
  * Tokens: refreshed before a call when they expire within 60 s, and once after a 401. A rotated token pair
  * is saved at once (sealed). A refresh that Todoist refuses sets status "reauth" and lastError
  * "Todoist asked you to connect again." and throws TodoistError(401).
@@ -151,6 +152,8 @@ export async function withTodoist<T>(
   work: (worker: TodoistWorker) => Promise<T>,
   options: { waitMs?: number } = {},
 ): Promise<T | null> {
+  // Paused: no worker talks to Todoist.
+  if (todoistPaused()) return null;
   if (!(await getTodoistAccount(userId))) return null;
   const owner = crypto.randomUUID();
   if (!(await takeLease(userId, owner, options.waitMs ?? 0))) return null;

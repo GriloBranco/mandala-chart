@@ -17,6 +17,14 @@ export function todoistApp(): { clientId: string; clientSecret: string } | null 
   return clientId && clientSecret ? { clientId, clientSecret } : null;
 }
 
+/**
+ * The sync is paused (see BACKLOG.md): the app does not offer Todoist, and nothing goes there or
+ * comes back from it. Connections and their links stay as they are. TODOIST_SYNC=on turns it on.
+ */
+export function todoistPaused(): boolean {
+  return process.env.TODOIST_SYNC?.trim() !== "on";
+}
+
 export function todoistAvailable(): boolean {
-  return todoistApp() !== null;
+  return !todoistPaused() && todoistApp() !== null;
 }
