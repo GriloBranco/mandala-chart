@@ -15,6 +15,19 @@ only the switch is off.
 - Changes made in Mandaala are not queued for Todoist.
 - The Mandaala project stays in the person's Todoist as it was. Its tasks no longer change.
 
+### What happened
+
+On 2026-10-28, between 09:53 and 10:08 (-03), the Todoist tasks of all four daily routines were
+deleted in Todoist, and each deletion took its square out of this week (path 1 below). The log
+has a "paused" event for each, and their links are gone. The weekly routine and the tasks in
+Todoist were not touched. On 2026-10-29 the three routines still in the chart were picked again
+in the database, with their old pick times; the fourth had been cleared in the app meanwhile.
+
+A tick in Todoist on 2026-10-27 also wrote a check-in for 2026-10-29, two days ahead.
+`completionDay()` keeps an occurrence later than the day of the tick, so a tick read with the
+task's next due day (as `item:completed` may carry it) checks in on a day still to come. That
+check-in was removed by hand.
+
 ### What can take a routine off Today
 
 A routine shows on Today while its goal is active and its square is picked (`active`), a habit,
@@ -43,9 +56,11 @@ activity log to tell which one it was.
   - the activity log's `extra_data` for a completion: with `due_date` and no `last_due_date`,
     `occurrenceOf()` in `pull.ts` puts the check-in on the next due day;
   - "every 29th", "every 30th" and "every last day" in short months.
-- Make Todoist unable to take a routine off Today: a routine's task deleted or finished there
-  only lets go of the link, and a repeat lost there is sent again from Mandaala. Ticks, names and
-  notes can still come in.
+- Make Todoist unable to take a routine off Today (this is what happened): a routine's task
+  deleted or finished there only lets go of the link, and a repeat lost there is sent again from
+  Mandaala. Ticks, names and notes can still come in.
+- Never check in on a day after the tick: take the occurrence from what the tick names
+  (`old_item`, `last_due_date`), and use the day of the tick when there is none.
 - Forget the connections from before the pause (`revokeTodoist()`, then `deleteTodoistData()`,
   for each one), so nothing that happened in Todoist meanwhile is replayed. Tasks already in
   Todoist are found again by their link when the person connects.
